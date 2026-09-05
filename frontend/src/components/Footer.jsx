@@ -20,7 +20,7 @@ function Footer() {
             to="/"
             className="footer-logo"
           >
-            Lendly
+            ShareSpare
           </Link>
 
           <p>
@@ -91,7 +91,7 @@ function Footer() {
         <div className="footer-column">
 
           <h3>
-            Lendly
+            ShareSpare
           </h3>
 
           <Link to="/">
@@ -116,7 +116,7 @@ function Footer() {
       <div className="footer-bottom">
 
         <p>
-          © 2026 Lendly. All rights reserved.
+          © 2026 ShareSpare. All rights reserved.
         </p>
 
         <div>

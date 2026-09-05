@@ -24,6 +24,7 @@
   padding-bottom: 45px;
 }
 
+
 .footer-logo {
   display: inline-block;
 
@@ -45,7 +46,6 @@
 
   font-size: 14px;
 }
-
 
 .footer-column {
   display: flex;
@@ -76,6 +76,7 @@
 .footer-column a:hover {
   color: #ffffff;
 }
+
 
 .footer-bottom {
   max-width: 1200px;
@@ -120,6 +121,7 @@
 .footer-bottom a:hover {
   color: #ffffff;
 }
+
 
 @media (max-width: 800px) {
 

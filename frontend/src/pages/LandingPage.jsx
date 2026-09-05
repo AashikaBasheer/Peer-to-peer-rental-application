@@ -26,7 +26,7 @@ function LandingPage() {
           </h1>
 
           <p className="hero-description">
-            Lendly connects people who have products they
+            ShareSpare connects people who have products they
             don't currently use with people who need them
             for a short period of time.
           </p>
@@ -188,7 +188,7 @@ function LandingPage() {
           </h2>
 
           <p>
-            Lendly makes borrowing and lending
+            ShareSpare makes borrowing and lending
             products simple.
           </p>
 
@@ -282,7 +282,7 @@ function LandingPage() {
 
         <p>
           Turn your unused products into
-          extra income with Lendly.
+          extra income with ShareSpare.
         </p>
 
         <Link

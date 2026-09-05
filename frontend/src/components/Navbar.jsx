@@ -11,9 +11,8 @@ function Navbar() {
 
       <Link
         to="/"
-        className="navbar-logo"
-      >
-        Lendly
+        className="navbar-logo">
+        ShareSpare
       </Link>
 
 
