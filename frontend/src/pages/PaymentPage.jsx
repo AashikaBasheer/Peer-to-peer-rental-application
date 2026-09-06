@@ -48,21 +48,6 @@ function PaymentPage() {
       setLoading(true);
       setError("");
 
-      /*
-        Payment API will be connected here
-        after the Spring Boot backend
-        payment endpoint is ready.
-      */
-
-      console.log("Payment Details:", {
-
-        productId: rental.productId,
-        rentalHours: rentalHours,
-        paymentMethod: paymentMethod,
-        amount: totalAmount
-
-      });
-
       setTimeout(() => {
 
         setLoading(false);
@@ -152,8 +137,6 @@ function PaymentPage() {
             </h2>
 
 
-            {/* Product */}
-
             <div className="payment-product">
 
               <div className="payment-product-image">
@@ -195,8 +178,6 @@ function PaymentPage() {
             </div>
 
 
-            {/* Rental Information */}
-
             <div className="rental-information">
 
               <div className="information-row">
@@ -227,8 +208,6 @@ function PaymentPage() {
 
             </div>
 
-
-            {/* Price Breakdown */}
 
             <div className="price-breakdown">
 
@@ -447,8 +426,6 @@ function PaymentPage() {
 
       </main>
 
-
-      {/*Footer*/}
 
       <Footer />
 

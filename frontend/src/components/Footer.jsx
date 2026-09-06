@@ -7,12 +7,7 @@ function Footer() {
   return (
     <footer className="footer">
 
-      {/* Footer Main Content */}
-
       <div className="footer-content">
-
-
-        {/* Brand */}
 
         <div className="footer-brand">
 
@@ -31,8 +26,6 @@ function Footer() {
 
         </div>
 
-
-        {/* Quick Links */}
 
         <div className="footer-column">
 
@@ -59,8 +52,6 @@ function Footer() {
         </div>
 
 
-        {/* Categories */}
-
         <div className="footer-column">
 
           <h3>
@@ -86,8 +77,6 @@ function Footer() {
         </div>
 
 
-        {/* About */}
-
         <div className="footer-column">
 
           <h3>
@@ -110,8 +99,6 @@ function Footer() {
 
       </div>
 
-
-      {/* Footer Bottom */}
 
       <div className="footer-bottom">
 

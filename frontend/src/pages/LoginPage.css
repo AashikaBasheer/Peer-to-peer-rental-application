@@ -6,17 +6,17 @@
   justify-content: center;
   align-items: center;
   padding: 40px 20px;
-  background: #f8faf9;
+  background: var(--color-light);
 }
 
 .login-card {
   width: 100%;
   max-width: 430px;
   padding: 45px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-light);
+  border: 1px solid var(--color-border);
   border-radius: 16px;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 12px 35px rgba(69, 5, 12, 0.06);
 }
 
 .login-header {
@@ -27,7 +27,7 @@
 .login-logo {
   display: inline-block;
   margin-bottom: 28px;
-  color: #176b4d;
+  color: var(--color-primary);
   text-decoration: none;
   font-size: 28px;
   font-weight: 700;
@@ -36,11 +36,11 @@
 .login-header h1 {
   margin-bottom: 10px;
   font-size: 30px;
-  color: #111827;
+  color: var(--color-dark);
 }
 
 .login-header p {
-  color: #6b7280;
+  color: var(--color-mild);
 }
 
 
@@ -51,7 +51,7 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #374151;
+  color: var(--color-dark);
   font-size: 14px;
   font-weight: 600;
 }
@@ -59,14 +59,14 @@
 .form-group input {
   width: 100%;
   padding: 14px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   outline: none;
   font-size: 15px;
 }
 
 .form-group input:focus {
-  border-color: #176b4d;
+  border-color: var(--color-primary);
 }
 
 
@@ -77,7 +77,7 @@
 }
 
 .password-row a {
-  color: #176b4d;
+  color: var(--color-primary);
   text-decoration: none;
   font-size: 13px;
 }
@@ -87,15 +87,15 @@
   padding: 14px;
   border: none;
   border-radius: 8px;
-  background: #176b4d;
-  color: #ffffff;
+  background: var(--color-primary);
+  color: var(--color-light);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .login-button:hover {
-  background: #12553e;
+  background: var(--color-dark);
 }
 
 .login-button:disabled {
@@ -110,12 +110,12 @@
 }
 
 .register-section span {
-  color: #6b7280;
+  color: var(--color-mild);
 }
 
 .register-section a {
   margin-left: 5px;
-  color: #176b4d;
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 600;
 }
@@ -126,13 +126,13 @@
 }
 
 .back-home a {
-  color: #6b7280;
+  color: var(--color-mild);
   text-decoration: none;
   font-size: 14px;
 }
 
 .back-home a:hover {
-  color: #176b4d;
+  color: var(--color-primary);
 }
 
 
@@ -156,11 +156,11 @@
 
   border-radius: 8px;
 
-  background: #fef2f2;
+  background: var(--color-light);
 
-  border: 1px solid #fecaca;
+  border: 1px solid var(--color-error);
 
-  color: #b91c1c;
+  color: var(--color-error);
 
   font-size: 14px;
 

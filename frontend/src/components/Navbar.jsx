@@ -7,16 +7,12 @@ function Navbar() {
   return (
     <nav className="navbar">
 
-      {/* Logo */}
-
       <Link
         to="/"
         className="navbar-logo">
         ShareSpare
       </Link>
 
-
-      {/* Navigation Links */}
 
       <div className="navbar-links">
 

@@ -22,15 +22,10 @@ function LoginPage() {
 
     try {
 
-      // Send login details to supabase
       const {data,error: authError} = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
       });
-
-      console.log("Login successful:", data);
-
-
 
       if (authError) {
 
@@ -60,12 +55,7 @@ function LoginPage() {
 
     <div className="login-page">
 
-      {/* Login Card */}
-
       <div className="login-card">
-
-
-        {/* Header */}
 
         <div className="login-header">
 
@@ -89,8 +79,6 @@ function LoginPage() {
         </div>
 
 
-        {/* Error Message*/}
-
         {error && (
 
           <div className="login-error">
@@ -100,15 +88,11 @@ function LoginPage() {
         )}
 
 
-        {/* Login Form */}
-
         <form
           className="login-form"
           onSubmit={handleLogin}
         >
 
-
-          {/* Email */}
 
           <div className="form-group">
 
@@ -130,8 +114,6 @@ function LoginPage() {
 
           </div>
 
-
-          {/* Password */}
 
           <div className="form-group">
 
@@ -163,8 +145,6 @@ function LoginPage() {
           </div>
 
 
-          {/* Login Button*/}
-
           <button
             type="submit"
             className="login-button"
@@ -181,8 +161,6 @@ function LoginPage() {
         </form>
 
 
-        {/* Register */}
-
         <div className="register-section">
 
           <span>
@@ -196,8 +174,6 @@ function LoginPage() {
 
         </div>
 
-
-        {/* Back to Landing Page*/}
 
         <div className="back-home">
 
