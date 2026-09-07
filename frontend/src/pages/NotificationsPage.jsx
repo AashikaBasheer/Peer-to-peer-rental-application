@@ -72,8 +72,6 @@ function NotificationsPage() {
     <div className="notifications-page">
       <Navbar />
 
-      {/* Breadcrumb*/}
-
       <div className="notifications-breadcrumb">
         <Link to="/">Home</Link>
         <span>/</span>
@@ -147,15 +145,11 @@ function NotificationsPage() {
                       : "notification-card unread"
                   }
                 >
-                  {/* Notification Icon */}
-
                   <div className="notification-icon">
                     {getNotificationIcon(
                       notification.type
                     )}
                   </div>
-
-                  {/* Notification Content */}
 
                   <div className="notification-content">
                     <div className="notification-title-row">

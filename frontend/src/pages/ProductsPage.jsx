@@ -2,23 +2,23 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { getProducts } from "../services/api";
+import { getItemImages, getProducts } from "../services/api";
 import "./ProductsPage.css";
 
 function ProductsPage() {
 
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const categories = [
-    "All",
-    "Electronics",
-    "Tools & Equipment",
-    "Furniture & Home",
-    "Outdoor & Events"
+    { label: "All", id: null },
+    { label: "Electronics", id: 1 },
+    { label: "Tools & Equipment", id: 2 },
+    { label: "Furniture & Home", id: 3 },
+    { label: "Outdoor & Events", id: 4 }
   ];
 
 
@@ -31,8 +31,20 @@ function ProductsPage() {
         setLoading(true);
 
         const data = await getProducts();
+        const productsWithImages = await Promise.all(
+          data.map(async (product) => {
+            const images = await getItemImages(product.itemId);
+            const primaryImage =
+              images.find((image) => image.isPrimary) || images[0];
 
-        setProducts(data);
+            return {
+              ...product,
+              imageUrl: primaryImage?.imageUrl || "",
+            };
+          })
+        );
+
+        setProducts(productsWithImages);
 
       } catch (error) {
 
@@ -57,13 +69,13 @@ function ProductsPage() {
   const filteredProducts = products.filter((product) => {
 
     const matchesSearch =
-      product.name
+      product.itemName
         ?.toLowerCase()
         .includes(searchTerm.toLowerCase());
 
     const matchesCategory =
-      selectedCategory === "All" ||
-      product.category === selectedCategory;
+      selectedCategory === null ||
+      product.catID === selectedCategory;
 
     return matchesSearch && matchesCategory;
 
@@ -73,12 +85,8 @@ function ProductsPage() {
   return (
     <div className="products-page">
 
-      {/*Navbar*/}
-
       <Navbar />
 
-
-      {/* Page Header */}
 
       <section className="products-header">
 
@@ -98,8 +106,6 @@ function ProductsPage() {
       </section>
 
 
-      {/*Search Section */}
-
       <section className="products-search-section">
 
         <div className="search-container">
@@ -116,24 +122,22 @@ function ProductsPage() {
         </div>
 
 
-        {/*Category Filter*/}
-
         <div className="category-filter">
 
           {categories.map((category) => (
 
             <button
-              key={category}
+              key={category.label}
               className={
-                selectedCategory === category
+                selectedCategory === category.id
                   ? "category-button active"
                   : "category-button"
               }
               onClick={() =>
-                setSelectedCategory(category)
+                setSelectedCategory(category.id)
               }
             >
-              {category}
+              {category.label}
             </button>
 
           ))}
@@ -142,8 +146,6 @@ function ProductsPage() {
 
       </section>
 
-
-      {/*Products Section*/}
 
       <section className="products-section">
 
@@ -160,8 +162,6 @@ function ProductsPage() {
         </div>
 
 
-        {/*Loading*/}
-
         {loading && (
 
           <div className="products-message">
@@ -174,8 +174,6 @@ function ProductsPage() {
 
         )}
 
-
-        {/*Error*/}
 
         {!loading && error && (
 
@@ -190,8 +188,6 @@ function ProductsPage() {
         )}
 
 
-        {/*Product Grid*/}
-
         {!loading &&
           !error &&
           filteredProducts.length > 0 && (
@@ -202,7 +198,7 @@ function ProductsPage() {
 
                 <div
                   className="product-card"
-                  key={product.id}
+                  key={product.itemId}
                 >
 
                   <div className="product-image">
@@ -212,7 +208,7 @@ function ProductsPage() {
                         product.imageUrl ||
                         "https://via.placeholder.com/300x220?text=ShareSpare"
                       }
-                      alt={product.name}
+                      alt={product.itemName}
                     />
 
                   </div>
@@ -222,17 +218,17 @@ function ProductsPage() {
 
                     <span className="product-category">
 
-                      {product.category}
+                      {product.category || "Available item"}
 
                     </span>
 
                     <h3>
-                      {product.name}
+                      {product.itemName}
                     </h3>
 
                     <p className="product-description">
 
-                      {product.description}
+                      {product.description || "No description available."}
 
                     </p>
 
@@ -242,7 +238,7 @@ function ProductsPage() {
                       <div className="product-price">
 
                         <strong>
-                          ₹{product.rentAmount}
+                          ₹{product.rentalPrice}
                         </strong>
 
                         <span>
@@ -253,7 +249,7 @@ function ProductsPage() {
 
 
                       <Link
-                        to={`/products/${product.id}`}
+                        to={`/products/${product.itemId}`}
                         className="view-button"
                       >
                         View Details
@@ -271,8 +267,6 @@ function ProductsPage() {
 
           )}
 
-
-        {/* No Products */}
 
         {!loading &&
           !error &&
@@ -295,8 +289,6 @@ function ProductsPage() {
 
       </section>
 
-
-      {/*Footer*/}
 
       <Footer />
 

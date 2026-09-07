@@ -1,6 +1,6 @@
 .notifications-page {
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: var(--color-light);
 }
 
 .notifications-breadcrumb {
@@ -17,11 +17,11 @@
 
 .notifications-breadcrumb a {
   text-decoration: none;
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .notifications-breadcrumb span {
-  color: #64748b;
+  color: var(--color-mild);
 }
 
 .notifications-header {
@@ -43,13 +43,13 @@
   font-size: 32px;
   font-weight: 700;
 
-  color: #0f172a;
+  color: var(--color-dark);
 }
 
 .notifications-header p {
   margin: 0;
 
-  color: #64748b;
+  color: var(--color-mild);
   font-size: 15px;
 }
 
@@ -57,7 +57,7 @@
   border: none;
   background: transparent;
 
-  color: #2563eb;
+  color: var(--color-primary);
 
   font-size: 14px;
   font-weight: 600;
@@ -83,9 +83,9 @@
 }
 
 .notification-card {
-  background-color: #ffffff;
+  background-color: var(--color-light);
 
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
 
   padding: 20px;
@@ -98,13 +98,13 @@
 }
 
 .notification-card:hover {
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 12px rgba(69, 5, 12, 0.08);
 }
 
 .notification-card.unread {
-  background-color: #eff6ff;
+  background-color: var(--color-light);
 
-  border-color: #bfdbfe;
+  border-color: var(--color-border);
 }
 
 .notification-icon {
@@ -117,7 +117,7 @@
   align-items: center;
   justify-content: center;
 
-  background-color: #f1f5f9;
+  background-color: var(--color-mild);
 
   border-radius: 50%;
 
@@ -140,13 +140,13 @@
   font-size: 16px;
   font-weight: 600;
 
-  color: #0f172a;
+  color: var(--color-dark);
 }
 
 .notification-message {
   margin: 7px 0;
 
-  color: #475569;
+  color: var(--color-mild);
 
   font-size: 14px;
   line-height: 1.5;
@@ -154,14 +154,14 @@
 
 .notification-time {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--color-mild);
 }
 
 .unread-dot {
   width: 8px;
   height: 8px;
 
-  background-color: #2563eb;
+  background-color: var(--color-primary);
 
   border-radius: 50%;
 
@@ -169,28 +169,28 @@
 }
 
 .notifications-message {
-  background-color: #ffffff;
+  background-color: var(--color-light);
 
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
 
   padding: 50px;
 
   text-align: center;
 
-  color: #64748b;
+  color: var(--color-mild);
 }
 
 .error-message h2 {
   margin-bottom: 8px;
 
-  color: #dc2626;
+  color: var(--color-error);
 }
 
 .notifications-empty {
-  background-color: #ffffff;
+  background-color: var(--color-light);
 
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
 
   padding: 70px 30px;
@@ -207,7 +207,7 @@
 .notifications-empty h2 {
   margin: 0 0 10px;
 
-  color: #0f172a;
+  color: var(--color-dark);
 
   font-size: 24px;
 }
@@ -217,7 +217,7 @@
 
   margin: 0 auto 25px;
 
-  color: #64748b;
+  color: var(--color-mild);
 
   line-height: 1.6;
 }
@@ -227,8 +227,8 @@
 
   padding: 12px 22px;
 
-  background-color: #2563eb;
-  color: #ffffff;
+  background-color: var(--color-primary);
+  color: var(--color-light);
 
   border-radius: 8px;
 
@@ -239,7 +239,7 @@
 }
 
 .browse-products-button:hover {
-  background-color: #1d4ed8;
+  background-color: var(--color-dark);
 }
 
 @media (max-width: 768px) {

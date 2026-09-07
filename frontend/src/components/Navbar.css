@@ -8,9 +8,9 @@
   align-items: center;
   justify-content: space-between;
 
-  background: #ffffff;
+  background: var(--color-light);
 
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
 
   position: relative;
   z-index: 100;
@@ -19,7 +19,7 @@
 .navbar-logo {
   text-decoration: none;
 
-  color: #176b4d;
+  color: var(--color-dark);
 
   font-size: 28px;
   font-weight: 700;
@@ -36,7 +36,7 @@
 .navbar-links a {
   text-decoration: none;
 
-  color: #374151;
+  color: var(--color-dark);
 
   font-size: 15px;
   font-weight: 500;
@@ -45,7 +45,7 @@
 }
 
 .navbar-links a:hover {
-  color: #176b4d;
+  color: var(--color-primary);
 }
 
 
@@ -54,15 +54,15 @@
 
   border-radius: 7px;
 
-  background: #176b4d;
+  background: var(--color-primary);
 
-  color: #ffffff !important;
+  color: var(--color-light) !important;
 }
 
 .navbar-signup:hover {
-  background: #12553e;
+  background: var(--color-dark);
 
-  color: #ffffff !important;
+  color: var(--color-light) !important;
 }
 
 

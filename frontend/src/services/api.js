@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { supabase } from "../lib/supabase";
 
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL = "/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -44,7 +44,7 @@ export const registerUser = async (userData) => {
 
 export const getProducts = async () => {
   const response = await api.get(
-    "/products"
+    "/items/available"
   );
 
   return response.data;
@@ -53,9 +53,14 @@ export const getProducts = async () => {
 
 export const getProductById = async (productId) => {
   const response = await api.get(
-    `/products/${productId}`
+    `/items/${productId}`
   );
 
+  return response.data;
+};
+
+export const getItemImages = async (itemId) => {
+  const response = await api.get(`/items/${itemId}/images`);
   return response.data;
 };
 

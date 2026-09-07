@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { getProductById } from "../services/api";
+import { getItemImages, getProductById } from "../services/api";
 import "./ProductDetailsPage.css";
 
 function ProductDetailsPage() {
@@ -28,8 +28,13 @@ function ProductDetailsPage() {
         setError("");
 
         const data = await getProductById(productId);
+        const images = await getItemImages(productId);
+        const primaryImage = images.find((image) => image.isPrimary) || images[0];
 
-        setProduct(data);
+        setProduct({
+          ...data,
+          imageUrl: primaryImage?.imageUrl || "",
+        });
 
       } catch (error) {
 
@@ -68,15 +73,15 @@ function ProductDetailsPage() {
 
       state: {
 
-        productId: product.id,
+        productId: product.itemId,
 
-        productName: product.name,
+        productName: product.itemName,
 
         productImage: product.imageUrl,
 
-        category: product.category,
+        category: product.category || "Available item",
 
-        rentAmount: product.rentAmount,
+        rentAmount: product.rentalPrice,
 
         rentalHours: Number(rentalHours),
 
@@ -165,7 +170,7 @@ function ProductDetailsPage() {
   }
 
   const rentAmount =
-    Number(product.rentAmount || 0);
+    Number(product.rentalPrice || 0);
 
   const totalAmount =
     rentAmount * Number(rentalHours);
@@ -174,33 +179,7 @@ function ProductDetailsPage() {
 
     <div className="product-details-page">
 
-      {/*Navbar*/}
-
       <Navbar />
-
-      <div className="breadcrumb-container">
-
-        <Link to="/">
-          Home
-        </Link>
-
-        <span>
-          /
-        </span>
-
-        <Link to="/products">
-          Products
-        </Link>
-
-        <span>
-          /
-        </span>
-
-        <span>
-          {product.name}
-        </span>
-
-      </div>
 
       <main className="product-details-container">
 
@@ -213,7 +192,7 @@ function ProductDetailsPage() {
                 product.imageUrl ||
                 "https://via.placeholder.com/600x500?text=ShareSpare"
               }
-              alt={product.name}
+              alt={product.itemName}
               className="details-product-image"
             />
 
@@ -223,13 +202,13 @@ function ProductDetailsPage() {
 
             <span className="details-category">
 
-              {product.category}
+              {product.category || "Available item"}
 
             </span>
 
 
             <h1>
-              {product.name}
+              {product.itemName}
             </h1>
 
 
@@ -240,8 +219,6 @@ function ProductDetailsPage() {
 
             </p>
 
-
-            {/*Rental Price*/}
 
             <div className="price-section">
 
@@ -401,8 +378,6 @@ function ProductDetailsPage() {
 
       </main>
 
-
-      {/*Footer*/}
 
       <Footer />
 

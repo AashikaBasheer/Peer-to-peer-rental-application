@@ -36,8 +36,6 @@ function RegisterPage() {
             return;
         }
 
-        console.log("Signup response:", data);
-
         setMessage(
             "Signup successful. Check your email if confirmation is enabled."
         );
