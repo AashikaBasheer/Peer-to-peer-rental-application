@@ -8,7 +8,6 @@ import com.rentalplatform.backend.entity.DamageReport;
 
 public interface DamageReportRepository extends JpaRepository<DamageReport, Long> {
     List<DamageReport> findByBookingId(Long bookingId);
-    List<DamageReport> findByReportedByUserId(Long userId);
     List<DamageReport> findByStatus(String status);
     boolean existsByBookingId(Long bookingId);
 }

@@ -32,6 +32,4 @@ public class Item {
     private Boolean availability;
     private BigDecimal rentalPrice;
     private BigDecimal securityDeposit;
-    
-    
 }
