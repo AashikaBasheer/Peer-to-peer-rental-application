@@ -405,7 +405,7 @@ function PaymentPage() {
 
               <p className="secure-payment">
 
-                🔒 Your payment information is
+                 Your payment information is
                 securely processed.
 
               </p>
