@@ -44,17 +44,11 @@ public class DamageReportController {
         return service.getByBooking(bookingId);
     }
 
-    @GetMapping("/user/{userId}")
-    public List<DamageReport> getByUser(@PathVariable Long userId) {
-        return service.getByUser(userId);
-    }
-
     @PutMapping("/{id}/status")
     public DamageReport updateStatus(
             @PathVariable Long id,
-            @RequestParam String status,
-            @RequestParam(required = false) String resolutionNotes) {
-        return service.updateStatus(id, status, resolutionNotes);
+            @RequestParam String status) {
+        return service.updateStatus(id, status);
     }
 
     @DeleteMapping("/{id}")

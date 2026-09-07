@@ -1,7 +1,7 @@
 package com.rentalplatform.backend.entity;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,32 +25,21 @@ public class DamageReport {
     @Column(name = "damage_id")
     private Long damageId;
     
-    @Column(name = "booking_id")
+    @Column(name = "booking_id", nullable = false)
     private Long bookingId;
-    
-    @Column(name = "reported_by_user_id")
-    private Long reportedByUserId;
-    
-    @Column(name = "item_id")
-    private Long itemId;
-    
-    @Column(name = "damage_description")
+
+    @Column(name = "damage_description", nullable = false)
     private String damageDescription;
-    
-    @Column(name = "damage_cost")
+
+    @Column(name = "damage_cost", nullable = false)
     private BigDecimal damageCost;
-    
+
     @Column(name = "image_url")
     private String imageUrl;
-    
+
+    @Column(name = "status", nullable = false)
     private String status;
-    
-    @Column(name = "resolution_notes")
-    private String resolutionNotes;
-    
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-    
-    @Column(name = "resolved_at")
-    private LocalDateTime resolvedAt;
+
+    @Column(name = "reported_at", nullable = false, insertable = false, updatable = false)
+    private OffsetDateTime reportedAt;
 }

@@ -1,24 +1,21 @@
 package com.rentalplatform.backend.entity;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "bookings")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 public class Booking {
 
