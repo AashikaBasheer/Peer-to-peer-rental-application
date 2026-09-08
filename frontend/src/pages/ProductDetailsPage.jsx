@@ -29,7 +29,12 @@ function ProductDetailsPage() {
         setError("");
 
         const data = await getProductById(productId);
-        const images = await getItemImages(productId);
+        let images = [];
+        try {
+          images = await getItemImages(productId);
+        } catch (imageError) {
+          console.warn(`Unable to load images for item ${productId}:`, imageError);
+        }
         const primaryImage = images.find((image) => image.isPrimary) || images[0];
 
         setProduct({
@@ -85,7 +90,6 @@ function ProductDetailsPage() {
     await createBooking({
       itemId: product.itemId,
       renterId,
-      lenderId: product.ownerId,
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
     });

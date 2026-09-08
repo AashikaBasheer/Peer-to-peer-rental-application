@@ -57,6 +57,11 @@
   padding: 24px;
 }
 
+.payment-section {
+  display: flex;
+  flex-direction: column;
+}
+
 .rental-summary h2,
 .payment-section h2 {
   font-size: 18px;
@@ -161,13 +166,14 @@
 .payment-description {
   color: var(--color-mild);
   font-size: 13px;
-  margin-top: -6px;
-  margin-bottom: 16px;
+  line-height: 1.5;
+  margin: -6px 0 20px;
 }
 
 .payment-form {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .payment-option {
@@ -222,7 +228,7 @@
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 8px;
+  margin-top: auto;
 }
 
 .pay-button:hover {
@@ -243,7 +249,7 @@
 
 .back-products {
   display: inline-block;
-  margin-top: 16px;
+  margin-top: 20px;
   color: var(--color-dark);
   text-decoration: none;
   font-size: 13px;

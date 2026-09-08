@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { getBookingsByRenter } from "../services/api";
+import { getBookingsByRenter, getProductById } from "../services/api";
 import { supabase } from "../lib/supabase";
 import "./WorkflowPage.css";
 
@@ -21,7 +21,18 @@ function MyRentalsPage() {
 			}
 
 			try {
-				setBookings(await getBookingsByRenter(renterId));
+				const rentalBookings = await getBookingsByRenter(renterId);
+				const bookingsWithDetails = await Promise.all(
+					rentalBookings.map(async (booking) => {
+						try {
+							const item = await getProductById(booking.itemId);
+							return { ...booking, item };
+						} catch {
+							return booking;
+						}
+				})
+				);
+				setBookings(bookingsWithDetails);
 				setMessage("");
 			} catch {
 				setMessage("Unable to load your rental requests.");
@@ -50,8 +61,14 @@ function MyRentalsPage() {
 						<article className="workflow-card" key={booking.bookingId}>
 							<div>
 								<span className="workflow-label">Booking #{booking.bookingId}</span>
-								<h2>Item #{booking.itemId}</h2>
-								<p>{booking.startTime} to {booking.endTime}</p>
+								<h2>{booking.item?.itemName || `Item #${booking.itemId}`}</h2>
+								<p>{booking.item?.location || "Location unavailable"}</p>
+								<dl className="booking-details">
+									<div><dt>From</dt><dd>{new Date(booking.startTime).toLocaleString()}</dd></div>
+									<div><dt>Until</dt><dd>{new Date(booking.endTime).toLocaleString()}</dd></div>
+									<div><dt>Rental</dt><dd>{booking.price ?? booking.item?.rentalPrice ?? "-"}</dd></div>
+									<div><dt>Deposit</dt><dd>{booking.securityDeposit ?? booking.item?.securityDeposit ?? "-"}</dd></div>
+								</dl>
 							</div>
 							<div className="workflow-actions">
 								<strong className={`status status-${booking.status.toLowerCase()}`}>

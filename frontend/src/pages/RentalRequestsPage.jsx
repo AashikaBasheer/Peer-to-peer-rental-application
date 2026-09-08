@@ -8,6 +8,7 @@ import "./WorkflowPage.css";
 function RentalRequestsPage() {
 	const [requests, setRequests] = useState([]);
 	const [message, setMessage] = useState("Loading booking requests...");
+	const [actionError, setActionError] = useState("");
 
 	async function loadRequests() {
 		const { data } = await supabase.auth.getSession();
@@ -19,10 +20,11 @@ function RentalRequestsPage() {
 		}
 
 		try {
-			setRequests(await getBookingsByLender(lenderId));
+			const lenderRequests = await getBookingsByLender(lenderId);
+			setRequests(lenderRequests);
 			setMessage("");
-		} catch {
-			setMessage("Unable to load booking requests.");
+		} catch (error) {
+			setMessage(error.response?.data?.message || "Unable to load booking requests.");
 		}
 	}
 
@@ -31,8 +33,13 @@ function RentalRequestsPage() {
 	}, []);
 
 	async function reviewRequest(bookingId, status) {
-		await updateBookingStatus(bookingId, status);
-		await loadRequests();
+		try {
+			setActionError("");
+			await updateBookingStatus(bookingId, status);
+			await loadRequests();
+		} catch (error) {
+			setActionError(error.response?.data?.message || "Unable to update this request.");
+		}
 	}
 
 	return (
@@ -49,6 +56,10 @@ function RentalRequestsPage() {
 				</div>
 
 				{message && <p className="workflow-message">{message}</p>}
+				{actionError && <p className="workflow-message workflow-error">{actionError}</p>}
+				{!message && requests.length === 0 && (
+					<p className="workflow-message">No rental requests found for your listings.</p>
+				)}
 				<div className="workflow-list">
 					{requests.map((request) => (
 						<article className="workflow-card" key={request.bookingId}>
