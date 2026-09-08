@@ -200,3 +200,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+.image-preview {
+	margin-top: 10px;
+}
+
+.image-preview p {
+	margin-bottom: 8px;
+	font-weight: 600;
+}
+
+.image-preview img {
+	width: 220px;
+	height: 160px;
+	object-fit: cover;
+	border-radius: 10px;
+	border: 1px solid #ddd;
+}
