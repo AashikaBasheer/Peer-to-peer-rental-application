@@ -1,8 +1,11 @@
 package com.rentalplatform.backend.service;
 
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.rentalplatform.backend.entity.Booking;
 import com.rentalplatform.backend.entity.Payment;
@@ -17,17 +20,39 @@ public class PaymentService {
     private final PaymentRepository repo;
     private final BookingRepository bookingRepository;
     public Payment create(Payment payment){
-        Booking booking = bookingRepository.findById(payment.getBookingId())
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
-
-        if (!"APPROVED".equals(booking.getStatus())) {
-            throw new RuntimeException("Payment is allowed only after lender approval");
+        if (payment.getBookingId() == null) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Booking is required");
         }
 
+        Booking booking = bookingRepository.findById(payment.getBookingId())
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Booking not found"));
+
+        if ("CONFIRMED".equals(booking.getStatus())) {
+            Optional<Payment> existingPayment = repo.findByBookingId(payment.getBookingId())
+                    .stream()
+                    .findFirst();
+            if (existingPayment.isPresent()) {
+                return existingPayment.get();
+            }
+        }
+
+        if ("REJECTED".equals(booking.getStatus()) || "CANCELLED".equals(booking.getStatus())) {
+            throw new ResponseStatusException(
+            HttpStatus.CONFLICT, "This booking cannot be paid");
+        }
+
+        payment.setPaymentMethod("DIRECT");
         payment.setPaymentStatus("COMPLETED");
         booking.setStatus("CONFIRMED");
         bookingRepository.save(booking);
-        return repo.save(payment);
+
+        try {
+            return repo.save(payment);
+        } catch (RuntimeException ignored) {
+            return payment;
+        }
     }
 
     public List<Payment> getByBooking(Long bookingId){

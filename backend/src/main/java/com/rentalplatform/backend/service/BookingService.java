@@ -2,8 +2,11 @@ package com.rentalplatform.backend.service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.rentalplatform.backend.entity.Booking;
 import com.rentalplatform.backend.entity.Item;
@@ -21,19 +24,30 @@ public class BookingService {
 
     public Booking createBooking(Booking booking) {
 
-        if(booking.getStartTime() == null || booking.getEndTime() == null) {
-            throw new RuntimeException("Start time and end time are required");
+        if (booking.getItemId() == null || booking.getRenterId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Item and renter are required");
         }
 
-        if(!booking.getEndTime().isAfter(booking.getStartTime())) {
-            throw new RuntimeException("End time must be after start time");
+        if (booking.getStartTime() == null || booking.getEndTime() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Start time and end time are required");
+        }
+
+        if (!booking.getEndTime().isAfter(booking.getStartTime())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "End time must be after start time");
         }
 
         Item item = itemRepository.findById(booking.getItemId())
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Item not found"));
+
+        booking.setLenderId(item.getOwnerId());
         
-        if(!item.getAvailability()){
-            throw new RuntimeException("Item is currently unavailable");
+        if (!Boolean.TRUE.equals(item.getAvailability())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Item is currently unavailable");
         }
 
         long overlappingBookings = bookingRepository.countOverlappingBookings(
@@ -43,7 +57,8 @@ public class BookingService {
         );
 
         if(overlappingBookings > 0) {
-            throw new RuntimeException("Item already booked for this period");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Item already booked for this period");
         }
 
         booking.setPrice(item.getRentalPrice());
@@ -61,7 +76,15 @@ public class BookingService {
     }
 
     public List<Booking> getByLender(UUID lenderId) {
-        return bookingRepository.findByLenderId(lenderId);
+        List<Long> itemIds = itemRepository.findByOwnerId(lenderId).stream()
+                .map(Item::getItemId)
+                .collect(Collectors.toList());
+
+        if (itemIds.isEmpty()) {
+            return List.of();
+        }
+
+        return bookingRepository.findByItemIdInOrderByCreatedAtDesc(itemIds);
     }
 
     public Booking updateStatus(Long bookingId, String status) {

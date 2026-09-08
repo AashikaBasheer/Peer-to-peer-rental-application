@@ -10,7 +10,6 @@ function PaymentPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [paymentMethod, setPaymentMethod] = useState("UPI");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const rental = location.state || {
@@ -57,11 +56,11 @@ function PaymentPage() {
           bookingId: rental.bookingId,
         amount: totalAmount,
         paymentType: "RENTAL",
-        paymentMethod,
+        paymentMethod: "DIRECT",
         paymentStatus: "COMPLETED",
       });
 
-      navigate("/home", {
+      navigate("/", {
         state: {
           paymentSuccess: true,
           productName: rental.productName,
@@ -76,7 +75,12 @@ function PaymentPage() {
         error
       );
 
+      const responseData = error.response?.data;
       setError(
+        responseData?.detail ||
+        responseData?.message ||
+        (typeof responseData === "string" ? responseData : null) ||
+        error.message ||
         "Payment failed. Please try again."
       );
 
@@ -264,12 +268,10 @@ function PaymentPage() {
 
           <section className="payment-section">
 
-            <h2>
-              Payment Method
-            </h2>
+            <h2>Confirm Payment</h2>
 
             <p className="payment-description">
-              Choose your preferred payment method.
+              Click the button below to mark this rental as paid.
             </p>
 
 
@@ -277,116 +279,6 @@ function PaymentPage() {
               onSubmit={handlePayment}
               className="payment-form"
             >
-
-              <label
-                className={
-                  paymentMethod === "UPI"
-                    ? "payment-option selected"
-                    : "payment-option"
-                }
-              >
-
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="UPI"
-                  checked={
-                    paymentMethod === "UPI"
-                  }
-                  onChange={(event) =>
-                    setPaymentMethod(
-                      event.target.value
-                    )
-                  }
-                />
-
-                <div>
-
-                  <strong>
-                    UPI
-                  </strong>
-
-                  <span>
-                    Google Pay, PhonePe, Paytm and more
-                  </span>
-
-                </div>
-
-              </label>
-
-              <label
-                className={
-                  paymentMethod === "CARD"
-                    ? "payment-option selected"
-                    : "payment-option"
-                }
-              >
-
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="CARD"
-                  checked={
-                    paymentMethod === "CARD"
-                  }
-                  onChange={(event) =>
-                    setPaymentMethod(
-                      event.target.value
-                    )
-                  }
-                />
-
-                <div>
-
-                  <strong>
-                    Credit / Debit Card
-                  </strong>
-
-                  <span>
-                    Visa, Mastercard and other cards
-                  </span>
-
-                </div>
-
-              </label>
-
-
-              <label
-                className={
-                  paymentMethod === "NET_BANKING"
-                    ? "payment-option selected"
-                    : "payment-option"
-                }
-              >
-
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="NET_BANKING"
-                  checked={
-                    paymentMethod === "NET_BANKING"
-                  }
-                  onChange={(event) =>
-                    setPaymentMethod(
-                      event.target.value
-                    )
-                  }
-                />
-
-                <div>
-
-                  <strong>
-                    Net Banking
-                  </strong>
-
-                  <span>
-                    Pay using your bank account
-                  </span>
-
-                </div>
-
-              </label>
-
 
               {error && (
 
@@ -409,9 +301,7 @@ function PaymentPage() {
               </button>
 
               <p className="secure-payment">
-
-                 Your payment information is
-                securely processed.
+                This is a demo payment. No payment details are collected.
 
               </p>
 
