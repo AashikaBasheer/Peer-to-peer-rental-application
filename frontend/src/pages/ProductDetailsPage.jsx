@@ -13,6 +13,7 @@ function ProductDetailsPage() {
 
   const [product, setProduct] = useState(null);
   const [rentalHours, setRentalHours] = useState(1);
+  const [deliveryMethod, setDeliveryMethod] = useState("SELF_PICKUP");
 
   const [loading, setLoading] = useState(true);
   const [requestLoading, setRequestLoading] = useState(false);
@@ -92,6 +93,7 @@ function ProductDetailsPage() {
       renterId,
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
+      deliveryMethod: deliveryMethod,
     });
 
     navigate("/my-rentals");
@@ -163,7 +165,7 @@ function ProductDetailsPage() {
             to="/products"
             className="back-button"
           >
-            ← Back to Products
+            Back to Products
           </Link>
 
         </div>
@@ -250,15 +252,21 @@ function ProductDetailsPage() {
             <div className="availability-section">
 
               <h3>
-                Availability
+                Availability & Location
               </h3>
 
               <p>
+                <strong>Stock:</strong> {product.quantity !== undefined && product.quantity !== null ? product.quantity : 1} unit(s) available
+              </p>
 
+              <p>
+                <strong>Location:</strong> {product.location || "Local"}
+              </p>
+
+              <p>
                 {product.lendingHours ||
                   product.availableHours ||
-                  "Contact lender for availability"}
-
+                  "Contact lender for custom timing"}
               </p>
 
             </div>
@@ -319,21 +327,29 @@ function ProductDetailsPage() {
                     6 Hours
                   </option>
 
-                  <option value="8">
-                    8 Hours
-                  </option>
-
                   <option value="12">
-                    12 Hours
+                    Half Day (12 Hours)
                   </option>
 
                   <option value="24">
-                    24 Hours
+                    Full Day (24 Hours)
                   </option>
 
                 </select>
 
               </div>
+
+              <div className="form-group">
+                <label>Delivery Method</label>
+                <select
+                  value={deliveryMethod}
+                  onChange={(e) => setDeliveryMethod(e.target.value)}
+                >
+                  <option value="SELF_PICKUP">Self Pickup</option>
+                  <option value="DELIVERY_PARTNER">Delivery Partner (₹50 Fee)</option>
+                </select>
+              </div>
+
 
               <div className="total-section">
 
@@ -376,7 +392,7 @@ function ProductDetailsPage() {
               to="/products"
               className="back-products"
             >
-              ← Back to Products
+              Back to Products
             </Link>
 
           </div>

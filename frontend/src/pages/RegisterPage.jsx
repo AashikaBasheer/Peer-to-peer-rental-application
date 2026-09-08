@@ -6,6 +6,7 @@ import "./RegisterPage.css";
 function RegisterPage() {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
+  const [location, setLocation] = useState("Chennai");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -22,14 +23,15 @@ function RegisterPage() {
       email,
       password,
       options: {
-        data: { name, mobile },
+        data: { name, mobile, location },
       },
     });
 
     if (signupError) {
       setError(signupError.message);
     } else {
-      setMessage("Account created. Check your email if confirmation is enabled.");
+      localStorage.setItem("user_city", location);
+      setMessage("Account created successfully! Check your email if confirmation is required.");
     }
 
     setLoading(false);
@@ -51,6 +53,22 @@ function RegisterPage() {
 
           <label htmlFor="register-mobile">Mobile</label>
           <input id="register-mobile" type="tel" value={mobile} onChange={(event) => setMobile(event.target.value)} required />
+
+          <label htmlFor="register-location">City / Location</label>
+          <select
+            id="register-location"
+            value={location}
+            onChange={(event) => setLocation(event.target.value)}
+            required
+            className="register-select"
+          >
+            <option value="Chennai">Chennai</option>
+            <option value="Madurai">Madurai</option>
+            <option value="Pondicherry">Pondicherry</option>
+            <option value="Coimbatore">Coimbatore</option>
+            <option value="Trichy">Trichy</option>
+            <option value="Salem">Salem</option>
+          </select>
 
           <label htmlFor="register-email">Email</label>
           <input id="register-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />

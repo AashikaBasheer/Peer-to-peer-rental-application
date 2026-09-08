@@ -12,10 +12,11 @@ function AddProductPage() {
 		itemName: "",
 		description: "",
 		catID: 1,
-		location: "",
+		location: "Chennai",
 		condition: "Good",
 		rentalPrice: "",
 		securityDeposit: "",
+		quantity: 1,
 	});
 
 	const [error, setError] = useState("");
@@ -73,6 +74,7 @@ function AddProductPage() {
 				ownerId,
 				availability: true,
 				catID: Number(form.catID),
+				quantity: Number(form.quantity || 1),
 				rentalPrice: Number(form.rentalPrice),
 				securityDeposit: Number(
 					form.securityDeposit || 0
@@ -202,11 +204,31 @@ function AddProductPage() {
 					</label>
 
 					<label>
-						Location
+						Location / City
 
-						<input
+						<select
 							name="location"
 							value={form.location}
+							onChange={updateField}
+							required
+						>
+							<option value="Chennai">Chennai</option>
+							<option value="Madurai">Madurai</option>
+							<option value="Pondicherry">Pondicherry</option>
+							<option value="Coimbatore">Coimbatore</option>
+							<option value="Trichy">Trichy</option>
+							<option value="Salem">Salem</option>
+						</select>
+					</label>
+
+					<label>
+						Quantity Available
+
+						<input
+							name="quantity"
+							type="number"
+							min="1"
+							value={form.quantity}
 							onChange={updateField}
 							required
 						/>

@@ -34,6 +34,11 @@ function LoginPage() {
 
       }
 
+      // Persist user's city so ProductsPage filters immediately
+      const userCity = data.session?.user?.user_metadata?.location;
+      if (userCity) {
+        localStorage.setItem("user_city", userCity);
+      }
 
       navigate("/products");
 
@@ -178,7 +183,7 @@ function LoginPage() {
         <div className="back-home">
 
           <Link to="/">
-            ← Back to ShareSpare
+            Back to ShareSpare
           </Link>
 
         </div>

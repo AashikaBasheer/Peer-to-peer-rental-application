@@ -67,12 +67,16 @@ public class BookingService {
 
         booking.setStatus("REQUESTED");
 
+        if ("DELIVERY_PARTNER".equals(booking.getDeliveryMethod())) {
+            booking.setDeliveryPartner("Speedy Logistics Demo Agent");
+        }
+
         return bookingRepository.save(booking);
 
     }
 
     public List<Booking> getByRenter(UUID renterId) {
-        return bookingRepository.findByRenterId(renterId);
+        return bookingRepository.findByRenterIdOrderByBookingIdDesc(renterId);
     }
 
     public List<Booking> getByLender(UUID lenderId) {

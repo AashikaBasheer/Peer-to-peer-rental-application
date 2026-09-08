@@ -32,4 +32,10 @@ public class Item {
     private Boolean availability;
     private BigDecimal rentalPrice;
     private BigDecimal securityDeposit;
+    @Column(name="quantity")
+    private Integer quantity = 1;
+
+    public Integer getQuantity() {
+        return quantity != null ? quantity : 1;
+    }
 }

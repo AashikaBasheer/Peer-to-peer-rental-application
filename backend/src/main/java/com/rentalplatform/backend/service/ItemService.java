@@ -31,7 +31,10 @@ public class ItemService {
     }
 
     public Item create(Item item){
-        item.setAvailability(true);
+        if (item.getQuantity() == null || item.getQuantity() < 1) {
+            item.setQuantity(1);
+        }
+        item.setAvailability(item.getQuantity() > 0);
         return repo.save(item);
     }
 

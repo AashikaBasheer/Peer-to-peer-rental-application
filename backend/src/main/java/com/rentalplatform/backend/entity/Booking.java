@@ -50,4 +50,10 @@ public class Booking {
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private Instant createdAt;
+
+    @Column(name = "delivery_method")
+    private String deliveryMethod;
+
+    @Column(name = "delivery_partner")
+    private String deliveryPartner;
 }
