@@ -1,121 +1,74 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import "./RegisterPage.css";
 
 function RegisterPage() {
+  const [name, setName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    const [name, setName] = useState("");
-    const [mobile, setMobile] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+  async function handleSignup(event) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+    setLoading(true);
 
-    const [message, setMessage] = useState("");
-    const [error, setError] = useState("");
+    const { error: signupError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name, mobile },
+      },
+    });
 
-    async function handleSignup(e) {
-
-        e.preventDefault();
-
-        setMessage("");
-        setError("");
-
-        const { data, error } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-
-            options: {
-                data: {
-                    name: name,
-                    mobile: mobile
-                }
-            }
-        });
-
-        if (error) {
-            console.error(error);
-            setError(error.message);
-            return;
-        }
-
-        setMessage(
-            "Signup successful. Check your email if confirmation is enabled."
-        );
+    if (signupError) {
+      setError(signupError.message);
+    } else {
+      setMessage("Account created. Check your email if confirmation is enabled.");
     }
 
-    return (
-        <div>
+    setLoading(false);
+  }
 
-            <h1>Create Account</h1>
+  return (
+    <main className="register-page">
+      <section className="register-card">
+        <Link to="/" className="register-logo">ShareSpare</Link>
+        <h1>Create an account</h1>
+        <p className="register-intro">Join your local rental community.</p>
 
-            <form onSubmit={handleSignup}>
+        {message && <p className="register-message">{message}</p>}
+        {error && <p className="register-error">{error}</p>}
 
-                <div>
-                    <label>Name</label>
-                    <br />
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                    />
-                </div>
+        <form className="register-form" onSubmit={handleSignup}>
+          <label htmlFor="register-name">Name</label>
+          <input id="register-name" value={name} onChange={(event) => setName(event.target.value)} required />
 
-                <br />
+          <label htmlFor="register-mobile">Mobile</label>
+          <input id="register-mobile" type="tel" value={mobile} onChange={(event) => setMobile(event.target.value)} required />
 
-                <div>
-                    <label>Mobile</label>
-                    <br />
-                    <input
-                        type="tel"
-                        value={mobile}
-                        onChange={(e) => setMobile(e.target.value)}
-                        required
-                    />
-                </div>
+          <label htmlFor="register-email">Email</label>
+          <input id="register-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
 
-                <br />
+          <label htmlFor="register-password">Password</label>
+          <input id="register-password" type="password" minLength="6" value={password} onChange={(event) => setPassword(event.target.value)} required />
 
-                <div>
-                    <label>Email</label>
-                    <br />
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                </div>
+          <button type="submit" disabled={loading}>
+            {loading ? "Creating account..." : "Create account"}
+          </button>
+        </form>
 
-                <br />
-
-                <div>
-                    <label>Password</label>
-                    <br />
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </div>
-
-                <br />
-
-                <button type="submit">
-                    Sign Up
-                </button>
-
-            </form>
-
-            {message && (
-                <p>{message}</p>
-            )}
-
-            {error && (
-                <p>{error}</p>
-            )}
-
-        </div>
-    );
+        <p className="register-footer">
+          Already have an account? <Link to="/login">Log in</Link>
+        </p>
+      </section>
+    </main>
+  );
 }
 
 export default RegisterPage;

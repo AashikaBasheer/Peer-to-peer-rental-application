@@ -1,12 +1,19 @@
 package com.rentalplatform.backend.repository;
 
-import com.rentalplatform.backend.entity.Booking;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.time.Instant;
+import com.rentalplatform.backend.entity.Booking;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
+
+    List<Booking> findByRenterId(UUID renterId);
+
+    List<Booking> findByLenderId(UUID lenderId);
 
     @Query("""
         SELECT COUNT(b)

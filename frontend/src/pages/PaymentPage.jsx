@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { createPayment } from "../services/api";
 import "./PaymentPage.css";
 
 function PaymentPage() {
@@ -48,21 +49,25 @@ function PaymentPage() {
       setLoading(true);
       setError("");
 
-      setTimeout(() => {
+      if (!rental.bookingId) {
+        throw new Error("Payment is available after lender approval.");
+      }
 
-        setLoading(false);
+      await createPayment({
+          bookingId: rental.bookingId,
+        amount: totalAmount,
+        paymentType: "RENTAL",
+        paymentMethod,
+        paymentStatus: "COMPLETED",
+      });
 
-        navigate("/my-rentals", {
-
-          state: {
-            paymentSuccess: true,
-            productName: rental.productName,
-            amount: totalAmount
-          }
-
-        });
-
-      }, 1500);
+      navigate("/home", {
+        state: {
+          paymentSuccess: true,
+          productName: rental.productName,
+          amount: totalAmount,
+        },
+      });
 
     } catch (error) {
 

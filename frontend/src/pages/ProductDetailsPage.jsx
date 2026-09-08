@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { getItemImages, getProductById } from "../services/api";
+import { createBooking, getItemImages, getProductById } from "../services/api";
+import { supabase } from "../lib/supabase";
 import "./ProductDetailsPage.css";
 
 function ProductDetailsPage() {
@@ -59,40 +60,37 @@ function ProductDetailsPage() {
 
   }, [productId]);
 
-  const handleRentalRequest = (event) => {
+  const handleRentalRequest = async (event) => {
 
   event.preventDefault();
 
   setRequestError("");
 
-  try {
+    try {
 
     setRequestLoading(true);
 
-    navigate("/payment", {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const renterId = sessionData.session?.user?.id;
 
-      state: {
+    if (!renterId) {
+      throw new Error("Please log in before requesting an item.");
+    }
 
-        productId: product.itemId,
+    const startTime = new Date();
+    const endTime = new Date(
+      startTime.getTime() + Number(rentalHours) * 60 * 60 * 1000
+    );
 
-        productName: product.itemName,
-
-        productImage: product.imageUrl,
-
-        category: product.category || "Available item",
-
-        rentAmount: product.rentalPrice,
-
-        rentalHours: Number(rentalHours),
-
-        lenderName:
-          product.lenderName ||
-          product.ownerName ||
-          "ShareSpare User"
-
-      }
-
+    await createBooking({
+      itemId: product.itemId,
+      renterId,
+      lenderId: product.ownerId,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
     });
+
+    navigate("/my-rentals");
 
   } catch (error) {
 
@@ -101,12 +99,17 @@ function ProductDetailsPage() {
       error
     );
 
+    const message =
+      error.response?.data?.message ||
+      error.response?.data ||
+      error.message ||
+      "Unable to proceed with request. Please try again.";
+
     setRequestError(
-      "Unable to proceed to payment. Please try again."
+      typeof message === "string" ? message : JSON.stringify(message)
     );
 
     setRequestLoading(false);
-
   }
 
 };

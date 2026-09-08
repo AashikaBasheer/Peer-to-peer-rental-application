@@ -1,6 +1,7 @@
 package com.rentalplatform.backend.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,10 @@ public class ItemService {
 
     public List<Item> getAvailable(){
         return repo.findByAvailabilityTrue();
+    }
+
+    public List<Item> getByOwner(UUID ownerId) {
+        return repo.findByOwnerId(ownerId);
     }
 
     public Item get(Long id){
