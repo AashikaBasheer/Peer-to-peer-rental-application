@@ -9,6 +9,10 @@ import PaymentPage from "../pages/PaymentPage";
 import NotificationsPage from "../pages/NotificationsPage";
 import RegisterPage from "../pages/RegisterPage";
 import HomePage from "../pages/HomePage";
+import MyRentalsPage from "../pages/MyRentalsPage";
+import RentalRequestsPage from "../pages/RentalRequestsPage";
+import MyListingsPage from "../pages/MyListingsPage";
+import AddProductPage from "../pages/AddProductPage";
 
 function AppRoutes() {
   return (
@@ -22,6 +26,10 @@ function AppRoutes() {
         <Route path="/notifications" element={<NotificationsPage />}/>
         <Route path="/register" element={<RegisterPage />}/>
         <Route path="/home" element={<HomePage />}/>
+        <Route path="/my-rentals" element={<MyRentalsPage />} />
+        <Route path="/rental-requests" element={<RentalRequestsPage />} />
+        <Route path="/my-listings" element={<MyListingsPage />} />
+        <Route path="/add-product" element={<AddProductPage />} />
       </Routes>
     </BrowserRouter>
   );

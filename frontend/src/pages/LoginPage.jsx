@@ -35,7 +35,7 @@ function LoginPage() {
       }
 
 
-      navigate("/home");
+      navigate("/products");
 
     } catch (error) {
 

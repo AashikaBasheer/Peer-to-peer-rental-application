@@ -64,13 +64,45 @@ export const getItemImages = async (itemId) => {
   return response.data;
 };
 
+export const createBooking = async (bookingData) => {
+  const response = await api.post("/bookings", bookingData);
+  return response.data;
+};
+
+export const getBookingsByRenter = async (renterId) => {
+  const response = await api.get(`/bookings/renter/${renterId}`);
+  return response.data;
+};
+
+export const getBookingsByLender = async (lenderId) => {
+  const response = await api.get(`/bookings/lender/${lenderId}`);
+  return response.data;
+};
+
+export const updateBookingStatus = async (bookingId, status) => {
+  const response = await api.put(`/bookings/${bookingId}/status`, null, {
+    params: { status },
+  });
+  return response.data;
+};
+
+export const createPayment = async (paymentData) => {
+  const response = await api.post("/payments", paymentData);
+  return response.data;
+};
+
 
 export const createProduct = async (productData) => {
   const response = await api.post(
-    "/products",
+    "/items",
     productData
   );
 
+  return response.data;
+};
+
+export const getMyItems = async (ownerId) => {
+  const response = await api.get(`/items/owner/${ownerId}`);
   return response.data;
 };
 
@@ -81,7 +113,7 @@ export const updateProduct = async (
 ) => {
 
   const response = await api.put(
-    `/products/${productId}`,
+    `/items/${productId}`,
     productData
   );
 
@@ -92,7 +124,7 @@ export const updateProduct = async (
 export const deleteProduct = async (productId) => {
 
   const response = await api.delete(
-    `/products/${productId}`
+    `/items/${productId}`
   );
 
   return response.data;

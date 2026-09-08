@@ -2,15 +2,14 @@
   min-height: 100vh;
   background: var(--color-light);
 }
+
 .payment-breadcrumb {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 25px 20px 10px;
-
+  padding: 16px 20px 8px;
   display: flex;
-  gap: 10px;
-
-  font-size: 14px;
+  gap: 8px;
+  font-size: 13px;
   color: var(--color-mild);
 }
 
@@ -25,55 +24,55 @@
 
 .payment-header {
   text-align: center;
-  padding: 35px 20px;
+  padding: 20px;
 }
 
 .payment-header h1 {
-  font-size: 36px;
-  margin-bottom: 10px;
+  font-size: 26px;
+  margin-bottom: 6px;
 }
 
 .payment-header p {
   color: var(--color-mild);
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .payment-container {
-  max-width: 1100px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 20px 20px 70px;
+  padding: 10px 20px 60px;
 }
 
 .payment-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  gap: 24px;
 }
 
 .rental-summary,
 .payment-section {
   background: var(--color-light);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 30px;
+  border-radius: 4px;
+  padding: 24px;
 }
 
 .rental-summary h2,
 .payment-section h2 {
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size: 18px;
+  margin-bottom: 16px;
 }
 
 .payment-product {
   display: flex;
-  gap: 18px;
-  padding-bottom: 25px;
+  gap: 16px;
+  padding-bottom: 16px;
   border-bottom: 1px solid var(--color-border);
 }
 
 .payment-product-image {
-  width: 120px;
-  height: 100px;
+  width: 90px;
+  height: 80px;
   flex-shrink: 0;
 }
 
@@ -81,48 +80,47 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
 .image-placeholder {
   width: 100%;
   height: 100%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  background: var(--color-mild);
-  border-radius: 8px;
-
+  background: var(--color-secondary);
+  border-radius: 4px;
   font-weight: 600;
+  font-size: 12px;
 }
 
 .payment-product-info span {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--color-mild);
 }
 
 .payment-product-info h3 {
-  margin: 7px 0;
-  font-size: 20px;
+  margin: 4px 0;
+  font-size: 16px;
 }
 
 .payment-product-info p {
   margin: 0;
   color: var(--color-mild);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .rental-information {
-  padding: 20px 0;
+  padding: 16px 0;
   border-bottom: 1px solid var(--color-border);
 }
 
 .information-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
 }
 
 .information-row:last-child {
@@ -134,18 +132,19 @@
 }
 
 .price-breakdown {
-  padding-top: 20px;
+  padding-top: 16px;
 }
 
 .price-breakdown h3 {
-  font-size: 18px;
-  margin-bottom: 15px;
+  font-size: 15px;
+  margin-bottom: 12px;
 }
 
 .price-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
 }
 
 .price-row span {
@@ -154,16 +153,16 @@
 
 .total-row {
   border-top: 1px solid var(--color-border);
-  margin-top: 15px;
-  padding-top: 18px;
-  font-size: 19px;
+  margin-top: 12px;
+  padding-top: 12px;
+  font-size: 16px;
 }
 
 .payment-description {
   color: var(--color-mild);
-  font-size: 14px;
-  margin-top: -10px;
-  margin-bottom: 25px;
+  font-size: 13px;
+  margin-top: -6px;
+  margin-bottom: 16px;
 }
 
 .payment-form {
@@ -174,73 +173,60 @@
 .payment-option {
   display: flex;
   align-items: center;
-  gap: 14px;
-
-  padding: 17px;
-
-  margin-bottom: 12px;
-
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
-
+  border-radius: 4px;
   cursor: pointer;
-}
-
-.payment-option:hover {
-  background: var(--color-light);
 }
 
 .payment-option.selected {
   border-color: var(--color-primary);
-  background: var(--color-light);
+  background: #f0f7ff;
 }
 
 .payment-option input {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .payment-option div {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .payment-option strong {
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .payment-option span {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--color-mild);
 }
 
 .payment-error {
   color: var(--color-error);
-  font-size: 14px;
-  margin: 10px 0;
+  font-size: 13px;
+  margin: 8px 0;
 }
 
 .pay-button {
   width: 100%;
-  padding: 15px;
-
+  padding: 12px;
   border: none;
-  border-radius: 8px;
-
+  border-radius: 4px;
   background: var(--color-primary);
   color: var(--color-light);
-
-  font-size: 16px;
-  font-weight: 500;
-
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .pay-button:hover {
-  background: var(--color-dark);
+  background: #004085;
 }
 
 .pay-button:disabled {
@@ -251,45 +237,29 @@
 .secure-payment {
   text-align: center;
   color: var(--color-mild);
-  font-size: 13px;
-  margin-top: 15px;
+  font-size: 12px;
+  margin-top: 12px;
 }
 
 .back-products {
   display: inline-block;
-  margin-top: 20px;
-
+  margin-top: 16px;
   color: var(--color-dark);
   text-decoration: none;
-
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .back-products:hover {
   text-decoration: underline;
 }
 
-@media (max-width: 800px) {
-
+@media (max-width: 768px) {
   .payment-layout {
     grid-template-columns: 1fr;
   }
 
-}
-
-@media (max-width: 500px) {
-
   .rental-summary,
   .payment-section {
-    padding: 20px;
+    padding: 16px;
   }
-
-  .payment-header h1 {
-    font-size: 30px;
-  }
-
-  .payment-product {
-    flex-direction: column;
-  }
-
 }
