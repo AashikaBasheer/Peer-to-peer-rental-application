@@ -28,6 +28,10 @@ public class ReviewService {
                 .orElse(null);
     }
 
+    public List<Review> getByReviewee(java.util.UUID revieweeId) {
+        return reviewRepository.findByRevieweeId(revieweeId);
+    }
+
     public void deleteReview(Long id) {
         reviewRepository.deleteById(id);
     }

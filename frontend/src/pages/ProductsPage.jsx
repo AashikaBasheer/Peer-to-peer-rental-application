@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { getItemImages, getProducts } from "../services/api";
+import { getItemImages, getProducts, getUserById } from "../services/api";
+import { supabase } from "../lib/supabase";
 import "./ProductsPage.css";
 
 function ProductsPage() {
@@ -10,6 +11,8 @@ function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCity, setSelectedCity] = useState("All");
+  const [userCity, setUserCity] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -21,8 +24,41 @@ function ProductsPage() {
     { label: "Outdoor & Events", id: 4 }
   ];
 
+  const cities = [
+    "All",
+    "Chennai",
+    "Madurai",
+    "Pondicherry",
+    "Coimbatore",
+    "Trichy",
+    "Salem"
+  ];
 
   useEffect(() => {
+
+    const checkUserLocation = async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user = sessionData.session?.user;
+        let city = user?.user_metadata?.location || localStorage.getItem("user_city");
+        if (!city && user?.id) {
+          try {
+            const profile = await getUserById(user.id);
+            if (profile?.location) {
+              city = profile.location;
+            }
+          } catch {
+            // ignore
+          }
+        }
+        if (city) {
+          setUserCity(city);
+          setSelectedCity(city);
+        }
+      } catch (err) {
+        console.warn("Could not determine user location:", err);
+      }
+    };
 
     const fetchProducts = async () => {
 
@@ -67,6 +103,7 @@ function ProductsPage() {
 
     };
 
+    checkUserLocation();
     fetchProducts();
 
   }, []);
@@ -82,7 +119,17 @@ function ProductsPage() {
       selectedCategory === null ||
       product.catID === selectedCategory;
 
-    return matchesSearch && matchesCategory;
+    const matchesCity =
+      !selectedCity ||
+      selectedCity === "All" ||
+      product.location?.trim().toLowerCase() === selectedCity.trim().toLowerCase();
+
+    // Only show available products with stock > 0
+    const isAvailable =
+      product.availability !== false &&
+      (product.quantity === undefined || product.quantity === null || Number(product.quantity) > 0);
+
+    return matchesSearch && matchesCategory && matchesCity && isAvailable;
 
   });
 
@@ -126,6 +173,38 @@ function ProductsPage() {
 
         </div>
 
+
+        <div className="city-filter-bar">
+          <div className="city-filter-control">
+            <span className="city-filter-label">City:</span>
+            <select
+              className="city-filter-select"
+              value={selectedCity}
+              onChange={(event) => setSelectedCity(event.target.value)}
+            >
+              {cities.map((city) => (
+                <option key={city} value={city}>
+                  {city === "All" ? "All Cities" : city}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {userCity && selectedCity === userCity && (
+            <span className="user-city-notice">
+              Filtered to your registered city: <strong>{userCity}</strong>
+            </span>
+          )}
+
+          {selectedCity !== "All" && (
+            <button
+              className="show-all-cities-btn"
+              onClick={() => setSelectedCity("All")}
+            >
+              Show all locations
+            </button>
+          )}
+        </div>
 
         <div className="category-filter">
 
@@ -221,22 +300,30 @@ function ProductsPage() {
 
                   <div className="product-content">
 
-                    <span className="product-category">
-
-                      {product.category || "Available item"}
-
-                    </span>
+                    <div className="product-card-meta">
+                      <span className="product-category">
+                        {product.category || "Available item"}
+                      </span>
+                      {product.location && (
+                        <span className="product-location-tag">
+                          {product.location}
+                        </span>
+                      )}
+                    </div>
 
                     <h3>
                       {product.itemName}
                     </h3>
 
                     <p className="product-description">
-
                       {product.description || "No description available."}
-
                     </p>
 
+                    <div className="product-stock-row">
+                      <span className="stock-indicator">
+                        Available: <strong>{product.quantity !== undefined && product.quantity !== null ? product.quantity : 1} units</strong>
+                      </span>
+                    </div>
 
                     <div className="product-bottom">
 

@@ -38,6 +38,11 @@ public class ReviewController {
         return service.getReviewById(id);
     }
 
+    @GetMapping("/reviewee/{revieweeId}")
+    public List<Review> getByReviewee(@PathVariable java.util.UUID revieweeId) {
+        return service.getByReviewee(revieweeId);
+    }
+
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         service.deleteReview(id);

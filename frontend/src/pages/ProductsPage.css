@@ -211,3 +211,102 @@
     gap: 4px;
   }
 }
+
+/* City Filter & Location Bar */
+.city-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 auto 16px;
+  padding: 8px 16px;
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  max-width: 700px;
+}
+
+.city-filter-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.city-filter-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-dark);
+}
+
+.city-filter-select {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  font-size: 13px;
+  background: #fff;
+  color: var(--color-dark);
+  cursor: pointer;
+  outline: none;
+}
+
+.city-filter-select:focus {
+  border-color: var(--color-primary);
+}
+
+.user-city-notice {
+  font-size: 12px;
+  color: #0b6623;
+  background: #eafaf1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #c2ebd1;
+}
+
+.show-all-cities-btn {
+  background: transparent;
+  border: 1px dashed var(--color-primary);
+  color: var(--color-primary);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.show-all-cities-btn:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* Product Card Meta & Badges */
+.product-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.product-location-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0b5394;
+  background: #e8f0fe;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.product-stock-row {
+  margin: 6px 0 10px;
+}
+
+.stock-indicator {
+  font-size: 12px;
+  color: #2e7d32;
+  background: #edf7ed;
+  padding: 2px 8px;
+  border-radius: 3px;
+  display: inline-block;
+  font-weight: 500;
+}

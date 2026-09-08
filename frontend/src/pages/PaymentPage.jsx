@@ -12,6 +12,7 @@ function PaymentPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const rental = location.state || {
 
     productId: "",
@@ -20,7 +21,9 @@ function PaymentPage() {
     category: "Category",
     rentAmount: 0,
     rentalHours: 1,
-    lenderName: "ShareSpare User"
+    lenderName: "ShareSpare User",
+    deliveryMethod: "SELF_PICKUP",
+    deliveryPartner: null
 
   };
 
@@ -36,8 +39,11 @@ function PaymentPage() {
   const serviceFee =
     Math.round(subtotal * 0.05);
 
+  const deliveryFee =
+    rental.deliveryMethod === "DELIVERY_PARTNER" ? 50 : 0;
+
   const totalAmount =
-    subtotal + serviceFee;
+    subtotal + serviceFee + deliveryFee;
 
   const handlePayment = async (event) => {
 
@@ -53,20 +59,15 @@ function PaymentPage() {
       }
 
       await createPayment({
-          bookingId: rental.bookingId,
+        bookingId: rental.bookingId,
         amount: totalAmount,
         paymentType: "RENTAL",
         paymentMethod: "DIRECT",
         paymentStatus: "COMPLETED",
       });
 
-      navigate("/", {
-        state: {
-          paymentSuccess: true,
-          productName: rental.productName,
-          amount: totalAmount,
-        },
-      });
+      setLoading(false);
+      setBookingConfirmed(true);
 
     } catch (error) {
 
@@ -249,6 +250,18 @@ function PaymentPage() {
 
               </div>
 
+              {rental.deliveryMethod === "DELIVERY_PARTNER" && (
+                <>
+                  <div className="price-row">
+                    <span>Delivery Fee</span>
+                    <span>₹{deliveryFee}</span>
+                  </div>
+                  <div className="price-row" style={{ fontSize: "0.85rem", color: "#666", marginTop: "-10px", borderBottom: "none" }}>
+                    <span>Agent: {rental.deliveryPartner || "Speedy Logistics Demo Agent"}</span>
+                  </div>
+                </>
+              )}
+
 
               <div className="price-row total-row">
 
@@ -312,7 +325,7 @@ function PaymentPage() {
               to="/products"
               className="back-products"
             >
-              ← Back to Products
+              Back to Products
             </Link>
 
           </section>
@@ -321,6 +334,73 @@ function PaymentPage() {
 
       </main>
 
+      {bookingConfirmed && (
+        <div className="booking-modal-overlay">
+          <div className="booking-modal-card">
+            <div className="booking-modal-icon"></div>
+            <h2>Booking Confirmed!</h2>
+            <p className="booking-modal-subtitle">
+              Your payment of <strong>₹{totalAmount}</strong> was successful. The item is now reserved and the available count has been updated!
+            </p>
+
+            <div className="booking-modal-details">
+              <div className="modal-detail-row">
+                <span>Product</span>
+                <strong>{rental.productName || "Rental Item"}</strong>
+              </div>
+              <div className="modal-detail-row">
+                <span>Booking ID</span>
+                <strong>#{rental.bookingId}</strong>
+              </div>
+              <div className="modal-detail-row">
+                <span>Duration</span>
+                <strong>{rentalHours} Hour(s)</strong>
+              </div>
+
+              <div className="summary-row">
+                <span>Platform Fee (5%)</span>
+                <span>₹{serviceFee}</span>
+              </div>
+
+              {rental.deliveryMethod === "DELIVERY_PARTNER" && (
+                <>
+                  <div className="summary-row">
+                    <span>Delivery Fee</span>
+                    <span>₹{deliveryFee}</span>
+                  </div>
+                  <div className="summary-row delivery-partner-info">
+                    <small>Assigned Agent: {rental.deliveryPartner || "Speedy Logistics Demo Agent"}</small>
+                  </div>
+                </>
+              )}
+
+              <div className="modal-detail-row">
+                <span>Total Paid</span>
+                <strong>₹{totalAmount}</strong>
+              </div>
+              <div className="modal-detail-row">
+                <span>Status</span>
+                <span className="modal-status-badge">CONFIRMED</span>
+              </div>
+            </div>
+
+            <div className="booking-modal-actions">
+              <button
+                className="modal-action-btn primary"
+                onClick={() => navigate("/my-rentals")}
+              >
+                View in My Rentals
+              </button>
+              <button
+                className="modal-action-btn secondary"
+                onClick={() => navigate("/products")}
+              >
+                Explore More Products
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
 

@@ -253,5 +253,28 @@ export const getNotifications = async () => {
   return response.data;
 };
 
+export const getUserById = async (userId) => {
+  const response = await api.get(`/users/${userId}`);
+  return response.data;
+};
+
+export const getReviewsByReviewee = async (revieweeId) => {
+  const response = await api.get(`/reviews/reviewee/${revieweeId}`);
+  return response.data;
+};
+export const createReturn = async (returnData) => {
+  const response = await api.post("/returns", returnData);
+  return response.data;
+};
+
+export const createDamageReport = async (reportData) => {
+  const response = await api.post("/damage-reports", reportData);
+  return response.data;
+};
+
+export const createReview = async (reviewData) => {
+  const response = await api.post("/reviews", reviewData);
+  return response.data;
+};
 
 export default api;

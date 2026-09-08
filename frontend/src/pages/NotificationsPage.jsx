@@ -33,25 +33,25 @@ function NotificationsPage() {
   const getNotificationIcon = (type) => {
     switch (type) {
       case "RENTAL_REQUEST":
-        return "📩";
+        return "Email";
 
       case "REQUEST_APPROVED":
-        return "✅";
+        return "Approved";
 
       case "REQUEST_REJECTED":
-        return "❌";
+        return "Rejected";
 
       case "PAYMENT":
-        return "💳";
+        return "Payment";
 
       case "RENTAL_REMINDER":
-        return "⏰";
+        return "Reminder";
 
       case "RETURN":
-        return "🔄";
+        return "Return";
 
       default:
-        return "🔔";
+        return "Alert";
     }
   };
   const formatDate = (date) => {
@@ -113,7 +113,7 @@ function NotificationsPage() {
           !error &&
           notifications.length === 0 && (
             <div className="notifications-empty">
-              <div className="empty-icon">🔔</div>
+              <div className="empty-icon">No Notifications</div>
 
               <h2>No Notifications</h2>
 
