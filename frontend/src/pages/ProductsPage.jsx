@@ -33,7 +33,12 @@ function ProductsPage() {
         const data = await getProducts();
         const productsWithImages = await Promise.all(
           data.map(async (product) => {
-            const images = await getItemImages(product.itemId);
+            let images = [];
+            try {
+              images = await getItemImages(product.itemId);
+            } catch (imageError) {
+              console.warn(`Unable to load images for item ${product.itemId}:`, imageError);
+            }
             const primaryImage =
               images.find((image) => image.isPrimary) || images[0];
 
