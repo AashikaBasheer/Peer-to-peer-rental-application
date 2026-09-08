@@ -64,6 +64,25 @@ export const getItemImages = async (itemId) => {
   return response.data;
 };
 
+export const addItemImage = async (
+  itemId,
+  imageUrl,
+  primary = false
+) => {
+  const response = await api.post(
+    `/items/${itemId}/images`,
+    null,
+    {
+      params: {
+        imageUrl,
+        primary,
+      },
+    }
+  );
+
+  return response.data;
+};
+
 export const createBooking = async (bookingData) => {
   const response = await api.post("/bookings", bookingData);
   return response.data;
