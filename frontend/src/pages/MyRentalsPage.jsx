@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getBookingsByRenter, createReturn, createReview, getProductById } from "../services/api";
 import { supabase } from "../lib/supabase";
+import InnovativeToast from "../components/InnovativeNotification";
 import {
 	IconStar,
 	IconCheck,
@@ -17,11 +18,15 @@ import "./WorkflowPage.css";
 function MyRentalsPage() {
 	const navigate = useNavigate();
 	const [bookings, setBookings] = useState([]);
+	const [toast, setToast] = useState(null);
 	const [returnModalBooking, setReturnModalBooking] = useState(null);
 	const [reviewModalBooking, setReviewModalBooking] = useState(null);
+	const [returnCondition, setReturnCondition] = useState("Good Condition");
 	const [returnRemarks, setReturnRemarks] = useState("");
 	const [reviewRating, setReviewRating] = useState(5);
 	const [reviewComment, setReviewComment] = useState("");
+	const [reviewTags, setReviewTags] = useState([]);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [message, setMessage] = useState("Loading your requests...");
 
 	const loadBookings = async () => {
@@ -39,32 +44,18 @@ function MyRentalsPage() {
 				return;
 			}
 
-			// Enrich bookings with item details so product name, price, and location are visible
-			const enriched = await Promise.all(
+			const bookingsWithItems = await Promise.all(
 				fetched.map(async (booking) => {
-					let item = null;
 					try {
-						item = await getProductById(booking.itemId);
-					} catch (e) {
-						// item may have been removed or unavailable
+						const item = await getProductById(booking.itemId);
+						return { ...booking, item };
+					} catch {
+						return booking;
 					}
-					return {
-						...booking,
-						item,
-					};
 				})
 			);
 
-			enriched.sort((a, b) => {
-				const dateA = new Date(a.createdAt || 0).getTime();
-				const dateB = new Date(b.createdAt || 0).getTime();
-				if (dateA !== dateB) {
-					return dateB - dateA;
-				}
-				return (b.bookingId || 0) - (a.bookingId || 0);
-			});
-
-			setBookings(enriched);
+			setBookings(bookingsWithItems);
 			setMessage("");
 		} catch (error) {
 			console.error("Failed to load rentals:", error);
@@ -75,43 +66,77 @@ function MyRentalsPage() {
 	const handleReturn = async () => {
 		if (!returnModalBooking) return;
 		try {
+			setIsSubmitting(true);
+			const fullRemarks = `[Condition: ${returnCondition}] ${returnRemarks || "Returned in good shape"}`;
 			await createReturn({
 				bookingId: returnModalBooking.bookingId,
-				remarks: returnRemarks || "Item returned in good condition",
+				remarks: fullRemarks,
 				condition: "Good",
 				status: "RETURNED",
 			});
 			setReturnModalBooking(null);
 			setReturnRemarks("");
-			alert("Return submitted successfully! The lender has been notified to verify receipt.");
+			setToast({
+				type: "success",
+				title: "Return Submitted!",
+				message: "Your return has been recorded. The lender has been notified to verify receipt.",
+			});
 			await loadBookings();
 		} catch (error) {
 			console.error("Error returning item:", error);
-			alert("Error submitting return. Please try again.");
+			setToast({
+				type: "error",
+				title: "Return Failed",
+				message: "Unable to submit return. Please try again.",
+			});
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
 	const handleReview = async () => {
 		if (!reviewModalBooking) return;
 		try {
+			setIsSubmitting(true);
 			const { data } = await supabase.auth.getSession();
 			const reviewerId = data.session?.user?.id;
+			const fullComment = reviewTags.length > 0
+				? `[${reviewTags.join(", ")}] ${reviewComment}`
+				: reviewComment;
+
 			await createReview({
 				bookingId: reviewModalBooking.bookingId,
 				reviewerId,
 				revieweeId: reviewModalBooking.lenderId,
 				rating: Number(reviewRating),
-				comment: reviewComment,
+				comment: fullComment,
 			});
 			setReviewModalBooking(null);
 			setReviewRating(5);
 			setReviewComment("");
-			alert("Review submitted successfully!");
+			setReviewTags([]);
+			setToast({
+				type: "success",
+				title: "Review Published!",
+				message: "Thank you! Your feedback helps other borrowers in the community.",
+			});
 			await loadBookings();
 		} catch (error) {
 			console.error("Error submitting review:", error);
-			alert("Error submitting review. Please try again.");
+			setToast({
+				type: "error",
+				title: "Review Failed",
+				message: "Unable to submit review. Please try again.",
+			});
+		} finally {
+			setIsSubmitting(false);
 		}
+	};
+
+	const toggleReviewTag = (tag) => {
+		setReviewTags((prev) =>
+			prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+		);
 	};
 
 	useEffect(() => {
@@ -269,67 +294,126 @@ function MyRentalsPage() {
 					))}
 				</div>
 
-				{/* Return Modal */}
+				{/* Innovative Return Modal */}
 				{returnModalBooking && (
 					<div
 						className="modal-overlay"
 						onClick={(e) => {
-							if (e.target === e.currentTarget) setReturnModalBooking(null);
+							if (e.target === e.currentTarget && !isSubmitting) setReturnModalBooking(null);
 						}}
 					>
-						<div className="modal-card">
+						<div className="modal-card innovative">
 							<button
 								className="modal-close-btn"
 								onClick={() => setReturnModalBooking(null)}
+								disabled={isSubmitting}
 								title="Close dialog"
 							>
 								<IconX size={16} />
 							</button>
-							<h2>Confirm Item Return</h2>
-							<p>
-								Are you ready to mark <strong>{returnModalBooking.item?.itemName || `Item #${returnModalBooking.itemId}`}</strong> as returned?
-							</p>
+
+							<div className="modal-header-with-badge">
+								<div className="modal-icon-badge primary">
+									<IconPackage size={22} />
+								</div>
+								<div className="modal-header-text">
+									<h2>Initiate Item Return</h2>
+									<p>Booking #{returnModalBooking.bookingId} • Return Confirmation</p>
+								</div>
+							</div>
+
+							<div className="modal-summary-box">
+								<div className="modal-summary-row">
+									<span className="modal-summary-label">Returning Item</span>
+									<span className="modal-summary-value">
+										{returnModalBooking.item?.itemName || `Item #${returnModalBooking.itemId}`}
+									</span>
+								</div>
+								<div className="modal-summary-row">
+									<span className="modal-summary-label">Rental Duration</span>
+									<span className="modal-summary-value">
+										{new Date(returnModalBooking.startTime).toLocaleDateString([], { month: "short", day: "numeric" })} — {new Date(returnModalBooking.endTime).toLocaleDateString([], { month: "short", day: "numeric" })}
+									</span>
+								</div>
+							</div>
+
 							<div className="form-group">
-								<label>Condition Notes / Return Remarks</label>
+								<label>Item Condition at Return</label>
+								<div className="quick-chips-row">
+									{["Like New / Pristine", "Good Condition", "Normal Wear & Tear"].map((cond) => (
+										<button
+											key={cond}
+											type="button"
+											className={`quick-chip-btn ${returnCondition === cond ? "active" : ""}`}
+											onClick={() => setReturnCondition(cond)}
+										>
+											{cond}
+										</button>
+									))}
+								</div>
+							</div>
+
+							<div className="form-group">
+								<label>Handover & Return Remarks</label>
 								<textarea
 									value={returnRemarks}
 									onChange={(e) => setReturnRemarks(e.target.value)}
-									placeholder="Describe product condition upon return (e.g., Clean and working perfectly)..."
+									placeholder="e.g. Handed over directly to lender in original bag with all accessories..."
 									rows={3}
 								/>
 							</div>
+
 							<div className="modal-actions">
-								<button className="workflow-button secondary" onClick={() => setReturnModalBooking(null)}>
+								<button
+									type="button"
+									className="workflow-button secondary"
+									onClick={() => setReturnModalBooking(null)}
+									disabled={isSubmitting}
+								>
 									Cancel
 								</button>
-								<button className="workflow-button" onClick={handleReturn}>
-									Submit Return
+								<button
+									type="button"
+									className="workflow-button success"
+									onClick={handleReturn}
+									disabled={isSubmitting}
+								>
+									<IconCheck size={14} />
+									{isSubmitting ? "Submitting..." : "Confirm Return"}
 								</button>
 							</div>
 						</div>
 					</div>
 				)}
 
-				{/* Review Modal */}
+				{/* Innovative Review Modal */}
 				{reviewModalBooking && (
 					<div
 						className="modal-overlay"
 						onClick={(e) => {
-							if (e.target === e.currentTarget) setReviewModalBooking(null);
+							if (e.target === e.currentTarget && !isSubmitting) setReviewModalBooking(null);
 						}}
 					>
-						<div className="modal-card">
+						<div className="modal-card innovative">
 							<button
 								className="modal-close-btn"
 								onClick={() => setReviewModalBooking(null)}
+								disabled={isSubmitting}
 								title="Close dialog"
 							>
 								<IconX size={16} />
 							</button>
-							<h2>Review Lender</h2>
-							<p>
-								Share your rental experience for booking #{reviewModalBooking.bookingId}.
-							</p>
+
+							<div className="modal-header-with-badge">
+								<div className="modal-icon-badge warning">
+									<IconStar size={22} filled={true} />
+								</div>
+								<div className="modal-header-text">
+									<h2>Review Lender & Experience</h2>
+									<p>Booking #{reviewModalBooking.bookingId} • Feedback</p>
+								</div>
+							</div>
+
 							<div className="form-group">
 								<label>Your Rating</label>
 								<div className="star-rating-select">
@@ -341,32 +425,78 @@ function MyRentalsPage() {
 											onClick={() => setReviewRating(star)}
 											title={`${star} star${star > 1 ? "s" : ""}`}
 										>
-											<IconStar size={26} filled={star <= reviewRating} />
+											<IconStar size={28} filled={star <= reviewRating} />
 										</button>
 									))}
-									<span className="star-score-text">{reviewRating} / 5 Stars</span>
+									<span className="star-score-text">
+										{reviewRating === 5 && "5 / 5 — Outstanding Lender! 🌟"}
+										{reviewRating === 4 && "4 / 5 — Great Experience 👍"}
+										{reviewRating === 3 && "3 / 5 — Satisfactory"}
+										{reviewRating === 2 && "2 / 5 — Below Expectations"}
+										{reviewRating === 1 && "1 / 5 — Disappointing"}
+									</span>
 								</div>
 							</div>
+
 							<div className="form-group">
-								<label>Review & Feedback</label>
+								<label>Highlights (Click to select)</label>
+								<div className="quick-chips-row">
+									{[
+										"Item in Pristine Condition",
+										"Punctual Handover",
+										"Helpful & Responsive",
+										"Accurate Description",
+										"Smooth Experience",
+									].map((tag) => (
+										<button
+											key={tag}
+											type="button"
+											className={`quick-chip-btn ${reviewTags.includes(tag) ? "active" : ""}`}
+											onClick={() => toggleReviewTag(tag)}
+										>
+											{tag}
+										</button>
+									))}
+								</div>
+							</div>
+
+							<div className="form-group">
+								<label>Feedback & Comments</label>
 								<textarea
 									value={reviewComment}
 									onChange={(e) => setReviewComment(e.target.value)}
-									placeholder="Quick handoff, helpful lender, product matched description!"
+									placeholder="Tell the community how the handover and equipment quality were..."
 									rows={3}
 								/>
 							</div>
+
 							<div className="modal-actions">
-								<button className="workflow-button secondary" onClick={() => setReviewModalBooking(null)}>
+								<button
+									type="button"
+									className="workflow-button secondary"
+									onClick={() => setReviewModalBooking(null)}
+									disabled={isSubmitting}
+								>
 									Cancel
 								</button>
-								<button className="workflow-button" onClick={handleReview}>
-									Submit Review
+								<button
+									type="button"
+									className="workflow-button"
+									onClick={handleReview}
+									disabled={isSubmitting}
+								>
+									{isSubmitting ? "Submitting..." : "Submit Review"}
 								</button>
 							</div>
 						</div>
 					</div>
 				)}
+
+				{/* Innovative Toast Notification */}
+				<InnovativeToast
+					notification={toast}
+					onClose={() => setToast(null)}
+				/>
 			</main>
 		</div>
 	);

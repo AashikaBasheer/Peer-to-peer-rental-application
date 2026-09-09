@@ -38,6 +38,8 @@ export function invalidateRequestsCache() {
   lastFetchTime = 0;
   inFlightFetch = null;
   itemCache.clear();
+  userCache.clear();
+  reviewsCache.clear();
   customerHistoryCache.clear();
 }
 
