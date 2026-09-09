@@ -3,6 +3,15 @@ import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getBookingsByRenter, createReturn, createReview, getProductById } from "../services/api";
 import { supabase } from "../lib/supabase";
+import {
+	IconStar,
+	IconCheck,
+	IconX,
+	IconCalendar,
+	IconClock,
+	IconMapPin,
+	IconPackage,
+} from "../components/Icons";
 import "./WorkflowPage.css";
 
 function MyRentalsPage() {
@@ -68,13 +77,13 @@ function MyRentalsPage() {
 		try {
 			await createReturn({
 				bookingId: returnModalBooking.bookingId,
-				remarks: returnRemarks,
+				remarks: returnRemarks || "Item returned in good condition",
 				condition: "Good",
-				status: "COMPLETED",
+				status: "RETURNED",
 			});
 			setReturnModalBooking(null);
 			setReturnRemarks("");
-			alert("Return submitted successfully!");
+			alert("Return submitted successfully! The lender has been notified to verify receipt.");
 			await loadBookings();
 		} catch (error) {
 			console.error("Error returning item:", error);
@@ -97,7 +106,7 @@ function MyRentalsPage() {
 			setReviewModalBooking(null);
 			setReviewRating(5);
 			setReviewComment("");
-			alert("Review submitted!");
+			alert("Review submitted successfully!");
 			await loadBookings();
 		} catch (error) {
 			console.error("Error submitting review:", error);
@@ -115,127 +124,249 @@ function MyRentalsPage() {
 			<main className="workflow-content">
 				<div className="workflow-heading">
 					<div>
-						<p className="workflow-kicker">Borrower view</p>
-						<h1>My rental requests</h1>
-						<p>Track approval and pay after the lender accepts.</p>
+						<p className="workflow-kicker">Borrower Dashboard</p>
+						<h1>My Rental Requests</h1>
+						<p>Track request approvals, return items, and review your lenders effortlessly.</p>
 					</div>
-					<Link to="/products" className="workflow-button secondary">Browse items</Link>
+					<Link to="/products" className="workflow-button secondary">
+						Browse Items
+					</Link>
 				</div>
 
 				{message && <p className="workflow-message">{message}</p>}
+
 				<div className="workflow-list">
 					{bookings.map((booking) => (
 						<article className="workflow-card" key={booking.bookingId}>
-							<div>
-								<span className="workflow-label">Booking #{booking.bookingId}</span>
-								<h2>{booking.item?.itemName || `Item #${booking.itemId}`}</h2>
-								<p>{booking.item?.location || "Location unavailable"}</p>
-								<dl className="booking-details">
-									<div><dt>From</dt><dd>{new Date(booking.startTime).toLocaleString()}</dd></div>
-									<div><dt>Until</dt><dd>{new Date(booking.endTime).toLocaleString()}</dd></div>
-									<div><dt>Rental</dt><dd>{booking.price ?? booking.item?.rentalPrice ?? "-"}</dd></div>
-									<div><dt>Deposit</dt><dd>{booking.securityDeposit ?? booking.item?.securityDeposit ?? "-"}</dd></div>
-								</dl>
-							</div>
-							<div className="workflow-actions">
+							{/* Top Bar */}
+							<div className="card-header-row">
+								<div className="card-header-left">
+									<span className="workflow-label">Booking #{booking.bookingId}</span>
+									{booking.createdAt && (
+										<span className="booking-timestamp">
+											Placed on {new Date(booking.createdAt).toLocaleDateString()}
+										</span>
+									)}
+								</div>
 								<strong className={`status status-${booking.status.toLowerCase()}`}>
 									{booking.status}
 								</strong>
-								{booking.status === "APPROVED" && (
+							</div>
+
+							{/* Main Content */}
+							<div className="card-main-content">
+								<div className="item-title-row">
+									<h2 className="item-title">
+										{booking.item?.itemName || `Item #${booking.itemId}`}
+									</h2>
+								</div>
+
+								<div className="item-meta-bar">
+									<span className="meta-item">
+										<IconMapPin size={14} />
+										{booking.item?.location || "Location not specified"}
+									</span>
+									<span className="meta-item meta-price">
+										Rent: ₹{booking.price ?? booking.item?.rentalPrice ?? "-"}
+									</span>
+									{(booking.securityDeposit != null || booking.item?.securityDeposit != null) && (
+										<span className="meta-item">
+											Deposit: ₹{booking.securityDeposit ?? booking.item?.securityDeposit}
+										</span>
+									)}
+								</div>
+
+								{/* Schedule Grid */}
+								<div className="schedule-grid">
+									<div className="schedule-block">
+										<span className="schedule-label">
+											<IconCalendar size={12} />
+											Rental Start
+										</span>
+										<span className="schedule-value">
+											{new Date(booking.startTime).toLocaleString([], {
+												dateStyle: "medium",
+												timeStyle: "short",
+											})}
+										</span>
+									</div>
+									<div className="schedule-block">
+										<span className="schedule-label">
+											<IconClock size={12} />
+											Rental End
+										</span>
+										<span className="schedule-value">
+											{new Date(booking.endTime).toLocaleString([], {
+												dateStyle: "medium",
+												timeStyle: "short",
+											})}
+										</span>
+									</div>
+								</div>
+							</div>
+
+							{/* Card Actions Bar */}
+							<div className="card-actions-bar">
+								{/* Review Lender Button always accessible if booking confirmed, returned or completed */}
+								{["CONFIRMED", "BOOKED", "RETURNED", "COMPLETED"].includes(booking.status) && (
 									<button
-										className="workflow-button"
-										onClick={() => navigate("/payment", {
-											state: {
-												bookingId: booking.bookingId,
-												productId: booking.itemId,
-												productName: `Item #${booking.itemId}`,
-												rentAmount: booking.price,
-												rentalHours: 1,
-												lenderName: "Your lender",
-												deliveryMethod: booking.deliveryMethod,
-												deliveryPartner: booking.deliveryPartner,
-											},
-										})}
+										className="workflow-button star-btn"
+										onClick={() => setReviewModalBooking(booking)}
+										title="Leave a review for this lender"
 									>
-										Pay now
+										<IconStar size={14} />
+										Review Lender
 									</button>
 								)}
-								{booking.status === "CONFIRMED" && (
+
+								{booking.status === "APPROVED" && (
+									<button
+										className="workflow-button success"
+										onClick={() =>
+											navigate("/payment", {
+												state: {
+													bookingId: booking.bookingId,
+													productId: booking.itemId,
+													productName: booking.item?.itemName || `Item #${booking.itemId}`,
+													rentAmount: booking.price,
+													rentalHours: 1,
+													lenderName: "Your Lender",
+													deliveryMethod: booking.deliveryMethod,
+													deliveryPartner: booking.deliveryPartner,
+												},
+											})
+										}
+									>
+										<IconCheck size={14} />
+										Pay Now (₹{booking.price})
+									</button>
+								)}
+
+								{["CONFIRMED", "BOOKED"].includes(booking.status) && (
 									<button
 										className="workflow-button"
 										onClick={() => setReturnModalBooking(booking)}
 									>
+										<IconPackage size={14} />
 										Return Item
 									</button>
 								)}
+
 								{booking.status === "RETURNED" && (
-									<button
-										className="workflow-button"
-										onClick={() => setReviewModalBooking(booking)}
-									>
-										Leave Review
-									</button>
+									<span className="status status-returned">
+										Return Submitted — Awaiting Lender Receipt
+									</span>
+								)}
+
+								{booking.status === "COMPLETED" && (
+									<span className="status status-completed">
+										<IconCheck size={12} />
+										Rental Completed
+									</span>
 								)}
 							</div>
 						</article>
 					))}
 				</div>
 
-				{/* Modals */}
+				{/* Return Modal */}
 				{returnModalBooking && (
-					<div className="modal-overlay">
+					<div
+						className="modal-overlay"
+						onClick={(e) => {
+							if (e.target === e.currentTarget) setReturnModalBooking(null);
+						}}
+					>
 						<div className="modal-card">
-							<h2>Return Item</h2>
-							<p>Are you returning <strong>Item #{returnModalBooking.itemId}</strong>?</p>
+							<button
+								className="modal-close-btn"
+								onClick={() => setReturnModalBooking(null)}
+								title="Close dialog"
+							>
+								<IconX size={16} />
+							</button>
+							<h2>Confirm Item Return</h2>
+							<p>
+								Are you ready to mark <strong>{returnModalBooking.item?.itemName || `Item #${returnModalBooking.itemId}`}</strong> as returned?
+							</p>
 							<div className="form-group">
-								<label>Remarks / Condition Notes</label>
+								<label>Condition Notes / Return Remarks</label>
 								<textarea
 									value={returnRemarks}
 									onChange={(e) => setReturnRemarks(e.target.value)}
-									placeholder="Item looks good..."
-									style={{width: '100%', minHeight: '80px'}}
+									placeholder="Describe product condition upon return (e.g., Clean and working perfectly)..."
+									rows={3}
 								/>
 							</div>
-							<div style={{display: 'flex', gap: '10px', marginTop: '15px'}}>
-								<button className="workflow-button" onClick={handleReturn}>Confirm Return</button>
-								<button className="workflow-button danger" onClick={() => setReturnModalBooking(null)}>Cancel</button>
+							<div className="modal-actions">
+								<button className="workflow-button secondary" onClick={() => setReturnModalBooking(null)}>
+									Cancel
+								</button>
+								<button className="workflow-button" onClick={handleReturn}>
+									Submit Return
+								</button>
 							</div>
 						</div>
 					</div>
 				)}
 
+				{/* Review Modal */}
 				{reviewModalBooking && (
-					<div className="modal-overlay">
+					<div
+						className="modal-overlay"
+						onClick={(e) => {
+							if (e.target === e.currentTarget) setReviewModalBooking(null);
+						}}
+					>
 						<div className="modal-card">
+							<button
+								className="modal-close-btn"
+								onClick={() => setReviewModalBooking(null)}
+								title="Close dialog"
+							>
+								<IconX size={16} />
+							</button>
 							<h2>Review Lender</h2>
+							<p>
+								Share your rental experience for booking #{reviewModalBooking.bookingId}.
+							</p>
 							<div className="form-group">
-								<label>Rating (1-5)</label>
-								<input
-									type="number"
-									min="1"
-									max="5"
-									value={reviewRating}
-									onChange={(e) => setReviewRating(e.target.value)}
-									style={{width: '100%', padding: '8px'}}
-								/>
+								<label>Your Rating</label>
+								<div className="star-rating-select">
+									{[1, 2, 3, 4, 5].map((star) => (
+										<button
+											key={star}
+											type="button"
+											className={`star-btn-pick ${star <= reviewRating ? "active" : ""}`}
+											onClick={() => setReviewRating(star)}
+											title={`${star} star${star > 1 ? "s" : ""}`}
+										>
+											<IconStar size={26} filled={star <= reviewRating} />
+										</button>
+									))}
+									<span className="star-score-text">{reviewRating} / 5 Stars</span>
+								</div>
 							</div>
-							<div className="form-group" style={{marginTop: '10px'}}>
-								<label>Comment</label>
+							<div className="form-group">
+								<label>Review & Feedback</label>
 								<textarea
 									value={reviewComment}
 									onChange={(e) => setReviewComment(e.target.value)}
-									placeholder="Great lender!"
-									style={{width: '100%', minHeight: '80px'}}
+									placeholder="Quick handoff, helpful lender, product matched description!"
+									rows={3}
 								/>
 							</div>
-							<div style={{display: 'flex', gap: '10px', marginTop: '15px'}}>
-								<button className="workflow-button" onClick={handleReview}>Submit Review</button>
-								<button className="workflow-button danger" onClick={() => setReviewModalBooking(null)}>Cancel</button>
+							<div className="modal-actions">
+								<button className="workflow-button secondary" onClick={() => setReviewModalBooking(null)}>
+									Cancel
+								</button>
+								<button className="workflow-button" onClick={handleReview}>
+									Submit Review
+								</button>
 							</div>
 						</div>
 					</div>
 				)}
-
 			</main>
 		</div>
 	);

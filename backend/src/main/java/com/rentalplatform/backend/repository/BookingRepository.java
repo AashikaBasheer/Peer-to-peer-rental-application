@@ -20,6 +20,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByLenderIdOrderByCreatedAtDesc(UUID lenderId);
 
+    long countByLenderIdAndRenterId(UUID lenderId, UUID renterId);
+
+    long countByRenterId(UUID renterId);
+
+    List<Booking> findByLenderIdAndRenterIdOrderByBookingIdDesc(UUID lenderId, UUID renterId);
+
+    List<Booking> findByItemIdAndStatusAndBookingIdNot(Long itemId, String status, Long bookingId);
+
     @Query("""
             SELECT COUNT(b)
             FROM Booking b

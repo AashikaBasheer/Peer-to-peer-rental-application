@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 import { supabase } from "../lib/supabase";
+import { getUserById } from "../services/api";
 
 function LoginPage() {
 
@@ -28,16 +29,27 @@ function LoginPage() {
       });
 
       if (authError) {
-
-          setError(authError.message);
-          return;
-
+        setError(authError.message);
+        return;
       }
 
-      // Persist user's city so ProductsPage filters immediately
-      const userCity = data.session?.user?.user_metadata?.location;
-      if (userCity) {
-        localStorage.setItem("user_city", userCity);
+      // Fetch user's city from the users DB table (most reliable source)
+      const userId = data.session?.user?.id;
+      if (userId) {
+        try {
+          const profile = await getUserById(userId);
+          if (profile?.location && profile.location.trim()) {
+            localStorage.setItem("user_city", profile.location.trim());
+          } else {
+            // Fallback to user_metadata
+            const metaCity = data.session?.user?.user_metadata?.location;
+            if (metaCity) localStorage.setItem("user_city", metaCity);
+          }
+        } catch {
+          // Fallback to user_metadata
+          const metaCity = data.session?.user?.user_metadata?.location;
+          if (metaCity) localStorage.setItem("user_city", metaCity);
+        }
       }
 
       navigate("/products");

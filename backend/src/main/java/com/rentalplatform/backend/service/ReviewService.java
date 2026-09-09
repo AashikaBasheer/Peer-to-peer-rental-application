@@ -16,6 +16,18 @@ public class ReviewService {
     }
 
     public Review createReview(Review review) {
+        if (review.getBookingId() != null) {
+            java.util.Optional<Review> existing = reviewRepository.findByBookingId(review.getBookingId());
+            if (existing.isPresent()) {
+                Review current = existing.get();
+                current.setRating(review.getRating());
+                current.setComment(review.getComment());
+                return reviewRepository.save(current);
+            }
+        }
+        if (review.getCreatedAt() == null) {
+            review.setCreatedAt(java.time.OffsetDateTime.now());
+        }
         return reviewRepository.save(review);
     }
 

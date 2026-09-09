@@ -45,4 +45,17 @@ public class BookingController {
         return bookingService.updateStatus(bookingId, status);
     }
 
+    @PutMapping("/{bookingId}/complete-return")
+    public Booking completeReturn(
+            @PathVariable Long bookingId,
+            @RequestParam(defaultValue = "true") boolean relist) {
+        return bookingService.completeReturn(bookingId, relist);
+    }
+
+    @GetMapping("/customer-history")
+    public java.util.Map<String, Object> getCustomerHistory(
+            @RequestParam UUID lenderId,
+            @RequestParam UUID renterId) {
+        return bookingService.getCustomerHistory(lenderId, renterId);
+    }
 }
