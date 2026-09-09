@@ -224,3 +224,25 @@
     gap: 10px;
   }
 }
+
+.navbar-logo {
+  grid-column: 1;
+  justify-self: start;
+
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+
+  transition: transform 0.2s ease;
+}
+
+.navbar-logo img {
+  height: 42px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.navbar-logo:hover {
+  transform: translateY(-1px);
+}
