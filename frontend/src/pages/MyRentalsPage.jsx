@@ -68,13 +68,13 @@ function MyRentalsPage() {
 		try {
 			await createReturn({
 				bookingId: returnModalBooking.bookingId,
-				remarks: returnRemarks,
+				remarks: returnRemarks || "Item returned in good condition",
 				condition: "Good",
-				status: "COMPLETED",
+				status: "RETURNED",
 			});
 			setReturnModalBooking(null);
 			setReturnRemarks("");
-			alert("Return submitted successfully!");
+			alert("Return submitted successfully! The lender has been notified to verify receipt.");
 			await loadBookings();
 		} catch (error) {
 			console.error("Error returning item:", error);
@@ -97,7 +97,7 @@ function MyRentalsPage() {
 			setReviewModalBooking(null);
 			setReviewRating(5);
 			setReviewComment("");
-			alert("Review submitted!");
+			alert("Review submitted successfully!");
 			await loadBookings();
 		} catch (error) {
 			console.error("Error submitting review:", error);
@@ -117,7 +117,7 @@ function MyRentalsPage() {
 					<div>
 						<p className="workflow-kicker">Borrower view</p>
 						<h1>My rental requests</h1>
-						<p>Track approval and pay after the lender accepts.</p>
+						<p>Track approval, return items, and review your lenders.</p>
 					</div>
 					<Link to="/products" className="workflow-button secondary">Browse items</Link>
 				</div>
@@ -137,7 +137,7 @@ function MyRentalsPage() {
 									<div><dt>Deposit</dt><dd>{booking.securityDeposit ?? booking.item?.securityDeposit ?? "-"}</dd></div>
 								</dl>
 							</div>
-							<div className="workflow-actions">
+							<div className="workflow-actions" style={{display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end'}}>
 								<strong className={`status status-${booking.status.toLowerCase()}`}>
 									{booking.status}
 								</strong>
@@ -148,7 +148,7 @@ function MyRentalsPage() {
 											state: {
 												bookingId: booking.bookingId,
 												productId: booking.itemId,
-												productName: `Item #${booking.itemId}`,
+												productName: booking.item?.itemName || `Item #${booking.itemId}`,
 												rentAmount: booking.price,
 												rentalHours: 1,
 												lenderName: "Your lender",
@@ -160,7 +160,7 @@ function MyRentalsPage() {
 										Pay now
 									</button>
 								)}
-								{booking.status === "CONFIRMED" && (
+								{["CONFIRMED", "BOOKED"].includes(booking.status) && (
 									<button
 										className="workflow-button"
 										onClick={() => setReturnModalBooking(booking)}
@@ -169,13 +169,25 @@ function MyRentalsPage() {
 									</button>
 								)}
 								{booking.status === "RETURNED" && (
-									<button
-										className="workflow-button"
-										onClick={() => setReviewModalBooking(booking)}
-									>
-										Leave Review
-									</button>
+									<span className="reviewed-tag" style={{fontSize: '12px', padding: '4px 8px'}}>
+										Return Submitted (Awaiting Lender)
+									</span>
 								)}
+								{booking.status === "COMPLETED" && (
+									<span className="reviewed-tag" style={{fontSize: '12px', padding: '4px 8px', background: '#e6f9ed', color: '#155724'}}>
+										Rental Completed
+									</span>
+								)}
+
+								{/* Review lender anytime */}
+								<button
+									className="workflow-button review-btn-pill"
+									onClick={() => setReviewModalBooking(booking)}
+									title="Review this lender anytime"
+									style={{fontSize: '13px', padding: '6px 12px'}}
+								>
+									⭐ Review Lender
+								</button>
 							</div>
 						</article>
 					))}

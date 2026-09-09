@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { getBookingsByLender, updateBookingStatus, getProductById, getUserById, getReviewsByReviewee, createDamageReport, createReview } from "../services/api";
+import {
+	getBookingsByLender,
+	updateBookingStatus,
+	getProductById,
+	getUserById,
+	getReviewsByReviewee,
+	createDamageReport,
+	createReview,
+	completeReturn,
+	getCustomerHistory,
+} from "../services/api";
 import { supabase } from "../lib/supabase";
 import "./WorkflowPage.css";
 
@@ -16,6 +26,20 @@ function RentalRequestsPage() {
 	const [damageCost, setDamageCost] = useState("");
 	const [reviewRating, setReviewRating] = useState(5);
 	const [reviewComment, setReviewComment] = useState("");
+	const [returnAnswers, setReturnAnswers] = useState({});
+	const [confirmingBookingId, setConfirmingBookingId] = useState(null);
+
+	function setReturnAnswer(bookingId, field, val) {
+		setReturnAnswers((prev) => ({
+			...prev,
+			[bookingId]: {
+				returned: true,
+				relist: true,
+				...(prev[bookingId] || {}),
+				[field]: val,
+			},
+		}));
+	}
 
 	async function loadRequests() {
 		const { data } = await supabase.auth.getSession();
@@ -34,6 +58,7 @@ function RentalRequestsPage() {
 					let item = null;
 					let borrower = null;
 					let reviews = [];
+					let customerHistory = null;
 
 					try {
 						item = await getProductById(request.itemId);
@@ -45,6 +70,7 @@ function RentalRequestsPage() {
 						if (request.renterId) {
 							borrower = await getUserById(request.renterId);
 							reviews = await getReviewsByReviewee(request.renterId);
+							customerHistory = await getCustomerHistory(lenderId, request.renterId);
 						}
 					} catch {
 						// ignore
@@ -55,6 +81,7 @@ function RentalRequestsPage() {
 						item,
 						borrower,
 						reviews: reviews || [],
+						customerHistory,
 					};
 				})
 			);
@@ -74,9 +101,31 @@ function RentalRequestsPage() {
 		try {
 			setActionError("");
 			await updateBookingStatus(bookingId, status);
+			if (status === "APPROVED") {
+				alert("Borrow request accepted! Any other pending requests for this item have been automatically rejected.");
+			}
 			await loadRequests();
 		} catch (error) {
 			setActionError(error.response?.data?.message || "Unable to update this request.");
+		}
+	}
+
+	async function handleConfirmReturn(bookingId, relist) {
+		try {
+			setActionError("");
+			setConfirmingBookingId(bookingId);
+			await completeReturn(bookingId, relist);
+			alert(
+				relist
+					? "Return confirmed! The item has been marked as returned and relisted into your active catalog."
+					: "Return confirmed! The item has been marked as returned and kept unlisted."
+			);
+			await loadRequests();
+		} catch (error) {
+			console.error("Failed to complete return:", error);
+			setActionError(error.response?.data?.message || "Failed to confirm return.");
+		} finally {
+			setConfirmingBookingId(null);
 		}
 	}
 
@@ -219,6 +268,24 @@ function RentalRequestsPage() {
 											{ratingInfo.recommendation}
 										</div>
 
+										{/* Customer Rental History Stats */}
+										<div className="customer-rental-history-badge">
+											{request.customerHistory?.timesWithLender > 0 ? (
+												<span className="repeat-badge">
+													🔁 Rented from you <strong>{request.customerHistory.timesWithLender}</strong> previous {request.customerHistory.timesWithLender === 1 ? "time" : "times"}
+												</span>
+											) : (
+												<span className="first-time-badge">
+													🌱 First-time renting from you
+												</span>
+											)}
+											{request.customerHistory?.totalRentals > 0 && (
+												<span className="total-badge">
+													• {request.customerHistory.totalRentals} platform {request.customerHistory.totalRentals === 1 ? "rental" : "rentals"} overall
+												</span>
+											)}
+										</div>
+
 										{request.reviews && request.reviews.length > 0 && (
 											<div className="borrower-reviews-wrapper">
 												<button
@@ -277,20 +344,124 @@ function RentalRequestsPage() {
 											Decision Recorded: <strong>{request.status}</strong>
 										</div>
 									)}
+
+									{/* Return Verification Questionnaire for Lender */}
 									{request.status === "RETURNED" && (
-										<div className="workflow-actions" style={{marginTop: '10px'}}>
-											<button
-												className="workflow-button danger"
-												onClick={() => setDamageModalBooking(request)}
-											>
-												Report Damage
-											</button>
-											<button
-												className="workflow-button"
-												onClick={() => setReviewModalBooking(request)}
-											>
-												Review Borrower
-											</button>
+										<div className="lender-return-verification">
+											<div className="verification-header">
+												<h4>🔄 Return Verification</h4>
+												<span className="badge-pill">Action Required</span>
+											</div>
+
+											<div className="question-block">
+												<p className="question-title">1. Did the product return?</p>
+												<div className="question-options">
+													<label className={`choice-pill ${returnAnswers[request.bookingId]?.returned !== false ? 'selected' : ''}`}>
+														<input
+															type="radio"
+															name={`returned-${request.bookingId}`}
+															checked={returnAnswers[request.bookingId]?.returned !== false}
+															onChange={() => setReturnAnswer(request.bookingId, 'returned', true)}
+														/>
+														✅ Yes, product has returned
+													</label>
+													<label className={`choice-pill ${returnAnswers[request.bookingId]?.returned === false ? 'selected' : ''}`}>
+														<input
+															type="radio"
+															name={`returned-${request.bookingId}`}
+															checked={returnAnswers[request.bookingId]?.returned === false}
+															onChange={() => setReturnAnswer(request.bookingId, 'returned', false)}
+														/>
+														❌ Not returned / Issue
+													</label>
+												</div>
+											</div>
+
+											{returnAnswers[request.bookingId]?.returned !== false && (
+												<div className="question-block">
+													<p className="question-title">2. Are you willing to list it out again?</p>
+													<div className="question-options">
+														<label className={`choice-pill ${returnAnswers[request.bookingId]?.relist !== false ? 'selected' : ''}`}>
+															<input
+																type="radio"
+																name={`relist-${request.bookingId}`}
+																checked={returnAnswers[request.bookingId]?.relist !== false}
+																onChange={() => setReturnAnswer(request.bookingId, 'relist', true)}
+															/>
+															📦 Yes, relist as available
+														</label>
+														<label className={`choice-pill ${returnAnswers[request.bookingId]?.relist === false ? 'selected' : ''}`}>
+															<input
+																type="radio"
+																name={`relist-${request.bookingId}`}
+																checked={returnAnswers[request.bookingId]?.relist === false}
+																onChange={() => setReturnAnswer(request.bookingId, 'relist', false)}
+															/>
+															⏸️ No, keep unlisted for now
+														</label>
+													</div>
+												</div>
+											)}
+
+											<div className="verification-actions">
+												{returnAnswers[request.bookingId]?.returned !== false ? (
+													<button
+														className="workflow-button"
+														disabled={confirmingBookingId === request.bookingId}
+														onClick={() => handleConfirmReturn(request.bookingId, returnAnswers[request.bookingId]?.relist !== false)}
+													>
+														{confirmingBookingId === request.bookingId ? "Confirming..." : "Confirm Return & Complete"}
+													</button>
+												) : (
+													<button
+														className="workflow-button danger"
+														onClick={() => setDamageModalBooking(request)}
+													>
+														Report Damage / Missing Item
+													</button>
+												)}
+											</div>
+
+											<div className="workflow-actions" style={{marginTop: '12px', borderTop: '1px dashed #d0e2f5', paddingTop: '10px'}}>
+												<button
+													className="workflow-button danger"
+													onClick={() => setDamageModalBooking(request)}
+													style={{fontSize: '12px', padding: '6px 10px'}}
+												>
+													Report Damage
+												</button>
+												<button
+													className="workflow-button"
+													onClick={() => setReviewModalBooking(request)}
+													style={{fontSize: '12px', padding: '6px 10px'}}
+												>
+													Review Borrower
+												</button>
+											</div>
+										</div>
+									)}
+
+									{request.status === "COMPLETED" && (
+										<div style={{marginTop: '10px'}}>
+											<div className="reviewed-tag" style={{background: '#e8f7ec', color: '#1b5e20', border: '1px solid #b7e4c7', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', marginBottom: '8px'}}>
+												✅ Return Verified & Rental Completed
+											</div>
+											<div className="workflow-actions">
+												<button
+													className="workflow-button"
+													onClick={() => setReviewModalBooking(request)}
+													style={{fontSize: '12px', padding: '6px 10px'}}
+												>
+													Review Borrower
+												</button>
+												<button
+													className="workflow-button danger"
+													onClick={() => setDamageModalBooking(request)}
+													style={{fontSize: '12px', padding: '6px 10px'}}
+												>
+													Report Damage
+												</button>
+											</div>
 										</div>
 									)}
 								</div>

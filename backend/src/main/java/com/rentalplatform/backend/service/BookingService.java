@@ -1,6 +1,8 @@
 package com.rentalplatform.backend.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import com.rentalplatform.backend.entity.Booking;
 import com.rentalplatform.backend.entity.Item;
 import com.rentalplatform.backend.repository.BookingRepository;
 import com.rentalplatform.backend.repository.ItemRepository;
+import com.rentalplatform.backend.repository.ReturnRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class BookingService {
     private final BookingRepository bookingRepository;
     private final ItemRepository itemRepository;
+    private final ReturnRepository returnRepository;
 
     public Booking createBooking(Booking booking) {
 
@@ -85,17 +89,63 @@ public class BookingService {
 
     public Booking updateStatus(Long bookingId, String status) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
-
-        if (!status.equals("APPROVED") && !status.equals("REJECTED")) {
-            throw new RuntimeException("Status must be APPROVED or REJECTED");
-        }
-
-        if (!booking.getStatus().equals("REQUESTED")) {
-            throw new RuntimeException("Only requested bookings can be reviewed");
-        }
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
 
         booking.setStatus(status);
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+
+        // If lender accepts/approves a borrow request, automatically reject all other pending requests for the same item
+        if ("APPROVED".equalsIgnoreCase(status) && booking.getItemId() != null) {
+            List<Booking> otherPendingBookings = bookingRepository
+                    .findByItemIdAndStatusAndBookingIdNot(booking.getItemId(), "REQUESTED", booking.getBookingId());
+
+            for (Booking other : otherPendingBookings) {
+                other.setStatus("REJECTED");
+                bookingRepository.save(other);
+            }
+        }
+
+        return saved;
+    }
+
+    public Booking completeReturn(Long bookingId, boolean relistProduct) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
+
+        booking.setStatus("COMPLETED");
+        bookingRepository.save(booking);
+
+        // Update return record status if present
+        returnRepository.findByBookingId(bookingId).ifPresent(rentalReturn -> {
+            rentalReturn.setStatus("CONFIRMED_BY_LENDER");
+            returnRepository.save(rentalReturn);
+        });
+
+        // Update item availability and quantity based on lender choice
+        if (booking.getItemId() != null) {
+            itemRepository.findById(booking.getItemId()).ifPresent(item -> {
+                if (relistProduct) {
+                    int currentQty = item.getQuantity() != null ? item.getQuantity() : 0;
+                    item.setQuantity(Math.max(1, currentQty + 1));
+                    item.setAvailability(true);
+                } else {
+                    item.setAvailability(false);
+                }
+                itemRepository.save(item);
+            });
+        }
+
+        return booking;
+    }
+
+    public Map<String, Object> getCustomerHistory(UUID lenderId, UUID renterId) {
+        long timesWithLender = bookingRepository.countByLenderIdAndRenterId(lenderId, renterId);
+        long totalRentals = bookingRepository.countByRenterId(renterId);
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("timesWithLender", timesWithLender);
+        stats.put("totalRentals", totalRentals);
+        stats.put("hasRentedBefore", timesWithLender > 0);
+        return stats;
     }
 }

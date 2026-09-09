@@ -105,6 +105,20 @@ export const updateBookingStatus = async (bookingId, status) => {
   return response.data;
 };
 
+export const completeReturn = async (bookingId, relist = true) => {
+  const response = await api.put(`/bookings/${bookingId}/complete-return`, null, {
+    params: { relist },
+  });
+  return response.data;
+};
+
+export const getCustomerHistory = async (lenderId, renterId) => {
+  const response = await api.get("/bookings/customer-history", {
+    params: { lenderId, renterId },
+  });
+  return response.data;
+};
+
 export const createPayment = async (paymentData) => {
   const response = await api.post("/payments", paymentData);
   return response.data;

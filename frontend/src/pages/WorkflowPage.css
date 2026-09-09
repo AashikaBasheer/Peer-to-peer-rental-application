@@ -678,3 +678,148 @@
     height: 190px;
   }
 }
+
+/* Customer Rental History Badge */
+.customer-rental-history-badge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 6px;
+  font-size: 13px;
+}
+
+.repeat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(0, 123, 255, 0.12);
+  color: #0056b3;
+  font-weight: 600;
+  border: 1px solid rgba(0, 123, 255, 0.25);
+}
+
+.first-time-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(40, 167, 69, 0.12);
+  color: #1e7e34;
+  font-weight: 600;
+  border: 1px solid rgba(40, 167, 69, 0.25);
+}
+
+.total-badge {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+/* Lender Return Verification Section */
+.lender-return-verification {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(240, 247, 255, 0.85);
+  border: 1px solid rgba(0, 123, 255, 0.22);
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 86, 214, 0.06);
+}
+
+.verification-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.verification-header h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #082b4c;
+}
+
+.badge-pill {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  background: #ffc107;
+  color: #755100;
+  border-radius: 12px;
+}
+
+.question-block {
+  margin-bottom: 12px;
+}
+
+.question-title {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0b3760;
+}
+
+.question-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.choice-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #ffffff;
+  border: 1.5px solid #c9def5;
+  border-radius: 24px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334e68;
+  transition: all 0.2s ease;
+}
+
+.choice-pill:hover {
+  border-color: #007bff;
+  background: #f4f9ff;
+}
+
+.choice-pill.selected {
+  border-color: #007bff;
+  background: #007bff;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.choice-pill input[type="radio"] {
+  display: none;
+}
+
+.verification-actions {
+  margin-top: 14px;
+}
+
+.hint-text {
+  margin: 0;
+  font-size: 12.5px;
+  color: #627d98;
+  font-style: italic;
+}
+
+.review-btn-pill {
+  background: rgba(255, 193, 7, 0.15) !important;
+  color: #855900 !important;
+  border: 1px solid rgba(255, 193, 7, 0.4) !important;
+  font-weight: 600;
+}
+
+.review-btn-pill:hover {
+  background: #ffc107 !important;
+  color: #000 !important;
+}
