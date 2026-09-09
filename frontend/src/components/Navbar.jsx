@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./Navbar.css";
+import logo from "../assets/images/logo.png";
 
 function Navbar() {
   const [user, setUser] = useState(null);
@@ -30,7 +31,7 @@ function Navbar() {
   return (
     <nav className="navbar">
       <Link to="/" className="navbar-logo">
-        ShareSpare
+        <img src={logo} alt="ShareSpare" />
       </Link>
 
       <div className="navbar-links">
