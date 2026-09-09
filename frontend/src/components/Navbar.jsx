@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { preloadRentalRequests } from "../services/rentalRequestsService";
 import "./Navbar.css";
 
 function Navbar() {
@@ -9,13 +10,21 @@ function Navbar() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser?.id) {
+        preloadRentalRequests(currentUser.id);
+      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser?.id) {
+        preloadRentalRequests(currentUser.id);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -27,6 +36,12 @@ function Navbar() {
     navigate("/login");
   };
 
+  const handleRequestsHover = () => {
+    if (user?.id) {
+      preloadRentalRequests(user.id);
+    }
+  };
+
   return (
     <nav className="navbar">
       <Link to="/" className="navbar-logo">
@@ -36,30 +51,31 @@ function Navbar() {
       <div className="navbar-links">
         <Link to="/">Home</Link>
         <Link to="/products">Explore</Link>
-
-        {user ? (
+        {user && (
           <>
             <Link to="/my-rentals">My Rentals</Link>
             <Link to="/my-listings">My Listings</Link>
-            <Link to="/rental-requests">Requests</Link>
-            <button
-              onClick={handleLogout}
-              style={{
-                background: "transparent",
-                border: "1px solid var(--color-border)",
-                borderRadius: "4px",
-                padding: "6px 12px",
-                cursor: "pointer",
-                fontSize: "14px",
-                color: "var(--color-dark)",
-              }}
+            <Link
+              to="/rental-requests"
+              onMouseEnter={handleRequestsHover}
+              onTouchStart={handleRequestsHover}
             >
-              Logout
-            </button>
+              Requests
+            </Link>
           </>
+        )}
+      </div>
+
+      <div className="navbar-actions">
+        {user ? (
+          <button onClick={handleLogout} className="navbar-logout-btn">
+            Logout
+          </button>
         ) : (
           <>
-            <Link to="/login">Login</Link>
+            <Link to="/login" className="navbar-login-link">
+              Login
+            </Link>
             <Link to="/register" className="navbar-signup">
               Sign Up
             </Link>

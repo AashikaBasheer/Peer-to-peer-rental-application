@@ -2,22 +2,43 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import {
-	getBookingsByLender,
 	updateBookingStatus,
-	getProductById,
-	getUserById,
-	getReviewsByReviewee,
 	createDamageReport,
 	createReview,
 	completeReturn,
-	getCustomerHistory,
 } from "../services/api";
+import {
+	fetchRentalRequestsWithDetails,
+	getCachedRequests,
+	invalidateRequestsCache,
+} from "../services/rentalRequestsService";
 import { supabase } from "../lib/supabase";
+import {
+	IconStar,
+	IconCheck,
+	IconX,
+	IconRepeat,
+	IconUser,
+	IconCalendar,
+	IconClock,
+	IconMapPin,
+	IconAlertTriangle,
+	IconPackage,
+	IconChevronDown,
+	IconChevronUp,
+} from "../components/Icons";
 import "./WorkflowPage.css";
 
 function RentalRequestsPage() {
-	const [requests, setRequests] = useState([]);
-	const [message, setMessage] = useState("Loading booking requests...");
+	// Initialize with cached requests if preloaded for instant 0ms render
+	const [requests, setRequests] = useState(() => {
+		const cached = getCachedRequests();
+		return cached || [];
+	});
+	const [message, setMessage] = useState(() => {
+		const cached = getCachedRequests();
+		return cached ? "" : "Loading booking requests...";
+	});
 	const [actionError, setActionError] = useState("");
 	const [expandedReviews, setExpandedReviews] = useState({});
 	const [damageModalBooking, setDamageModalBooking] = useState(null);
@@ -26,70 +47,32 @@ function RentalRequestsPage() {
 	const [damageCost, setDamageCost] = useState("");
 	const [reviewRating, setReviewRating] = useState(5);
 	const [reviewComment, setReviewComment] = useState("");
-	const [returnAnswers, setReturnAnswers] = useState({});
 	const [confirmingBookingId, setConfirmingBookingId] = useState(null);
 
-	function setReturnAnswer(bookingId, field, val) {
-		setReturnAnswers((prev) => ({
-			...prev,
-			[bookingId]: {
-				returned: true,
-				relist: true,
-				...(prev[bookingId] || {}),
-				[field]: val,
-			},
-		}));
-	}
-
-	async function loadRequests() {
+	async function loadRequests(forceRefresh = false) {
 		const { data } = await supabase.auth.getSession();
 		const lenderId = data.session?.user?.id;
 
 		if (!lenderId) {
-			setMessage("Please log in to see requests for your items.");
+			setMessage("Please log in to view requests for your items.");
 			return;
 		}
 
+		// Instant display if cached
+		const cached = getCachedRequests(lenderId);
+		if (cached && !forceRefresh) {
+			setRequests(cached);
+			setMessage("");
+		}
+
 		try {
-			const lenderRequests = await getBookingsByLender(lenderId);
-
-			const requestsWithDetails = await Promise.all(
-				lenderRequests.map(async (request) => {
-					let item = null;
-					let borrower = null;
-					let reviews = [];
-					let customerHistory = null;
-
-					try {
-						item = await getProductById(request.itemId);
-					} catch {
-						// ignore
-					}
-
-					try {
-						if (request.renterId) {
-							borrower = await getUserById(request.renterId);
-							reviews = await getReviewsByReviewee(request.renterId);
-							customerHistory = await getCustomerHistory(lenderId, request.renterId);
-						}
-					} catch {
-						// ignore
-					}
-
-					return {
-						...request,
-						item,
-						borrower,
-						reviews: reviews || [],
-						customerHistory,
-					};
-				})
-			);
-
+			const requestsWithDetails = await fetchRentalRequestsWithDetails(lenderId, { forceRefresh });
 			setRequests(requestsWithDetails);
 			setMessage("");
 		} catch (error) {
-			setMessage(error.response?.data?.message || "Unable to load booking requests.");
+			if (!cached) {
+				setMessage(error.response?.data?.message || "Unable to load booking requests.");
+			}
 		}
 	}
 
@@ -101,10 +84,11 @@ function RentalRequestsPage() {
 		try {
 			setActionError("");
 			await updateBookingStatus(bookingId, status);
+			invalidateRequestsCache();
 			if (status === "APPROVED") {
 				alert("Borrow request accepted! Any other pending requests for this item have been automatically rejected.");
 			}
-			await loadRequests();
+			await loadRequests(true);
 		} catch (error) {
 			setActionError(error.response?.data?.message || "Unable to update this request.");
 		}
@@ -115,12 +99,13 @@ function RentalRequestsPage() {
 			setActionError("");
 			setConfirmingBookingId(bookingId);
 			await completeReturn(bookingId, relist);
+			invalidateRequestsCache();
 			alert(
 				relist
 					? "Return confirmed! The item has been marked as returned and relisted into your active catalog."
 					: "Return confirmed! The item has been marked as returned and kept unlisted."
 			);
-			await loadRequests();
+			await loadRequests(true);
 		} catch (error) {
 			console.error("Failed to complete return:", error);
 			setActionError(error.response?.data?.message || "Failed to confirm return.");
@@ -135,16 +120,18 @@ function RentalRequestsPage() {
 			await createDamageReport({
 				bookingId: damageModalBooking.bookingId,
 				damageDescription: damageDesc,
-				damageCost: Number(damageCost),
-				status: "REPORTED"
+				damageCost: Number(damageCost) || 0,
+				status: "REPORTED",
 			});
 			setDamageModalBooking(null);
 			setDamageDesc("");
 			setDamageCost("");
-			alert("Damage report filed.");
+			invalidateRequestsCache();
+			alert("Damage report successfully submitted.");
+			await loadRequests(true);
 		} catch (error) {
 			console.error(error);
-			alert("Error filing damage report.");
+			alert("Error submitting damage report.");
 		}
 	};
 
@@ -162,7 +149,9 @@ function RentalRequestsPage() {
 			setReviewModalBooking(null);
 			setReviewRating(5);
 			setReviewComment("");
-			alert("Review submitted!");
+			invalidateRequestsCache();
+			alert("Review submitted successfully!");
+			await loadRequests(true);
 		} catch (error) {
 			console.error(error);
 			alert("Error submitting review.");
@@ -183,9 +172,14 @@ function RentalRequestsPage() {
 			return {
 				avg,
 				count: reviews.length,
-				label: `${avg} / 5.0 (${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'})`,
+				label: `${avg} / 5.0 (${reviews.length} ${reviews.length === 1 ? "review" : "reviews"})`,
 				badgeClass: avg >= 4 ? "rating-high" : avg >= 3 ? "rating-med" : "rating-low",
-				recommendation: avg >= 4 ? "Highly Rated Borrower" : avg >= 3 ? "Moderate Rating - Check Reviews" : "Low Rating - Caution Advised",
+				recommendation:
+					avg >= 4
+						? "Highly rated borrower with verified history"
+						: avg >= 3
+						? "Moderate rating — check past reviews"
+						: "Low rating — review details carefully",
 			};
 		}
 
@@ -196,16 +190,16 @@ function RentalRequestsPage() {
 				count: 1,
 				label: `${score} / 5.0`,
 				badgeClass: score >= 4 ? "rating-high" : "rating-med",
-				recommendation: score >= 4 ? "Trusted Borrower" : "Check borrower profile",
+				recommendation: score >= 4 ? "Trusted borrower" : "Check borrower profile",
 			};
 		}
 
 		return {
 			avg: null,
 			count: 0,
-			label: "New Borrower (No ratings yet)",
+			label: "New Borrower",
 			badgeClass: "rating-new",
-			recommendation: "First-time borrower on ShareSpare",
+			recommendation: "First-time borrower on ShareSpare platform",
 		};
 	}
 
@@ -215,11 +209,13 @@ function RentalRequestsPage() {
 			<main className="workflow-content">
 				<div className="workflow-heading">
 					<div>
-						<p className="workflow-kicker">Lender view</p>
-						<h1>Rental requests</h1>
-						<p>Review borrower ratings and feedback before approving requests.</p>
+						<p className="workflow-kicker">Lender Dashboard</p>
+						<h1>Rental Requests</h1>
+						<p>Review borrower reliability and manage your rental lifecycle with zero friction.</p>
 					</div>
-					<Link to="/my-listings" className="workflow-button secondary">My listings</Link>
+					<Link to="/my-listings" className="workflow-button secondary">
+						My Listings
+					</Link>
 				</div>
 
 				{message && <p className="workflow-message">{message}</p>}
@@ -227,88 +223,140 @@ function RentalRequestsPage() {
 				{!message && requests.length === 0 && (
 					<p className="workflow-message">No rental requests found for your listings.</p>
 				)}
+
 				<div className="workflow-list">
 					{requests.map((request) => {
 						const ratingInfo = getBorrowerRatingDisplay(request.borrower, request.reviews);
 						const isReviewsOpen = expandedReviews[request.bookingId];
+						const borrowerInitial = request.borrower?.name
+							? request.borrower.name.trim()[0].toUpperCase()
+							: "U";
 
 						return (
-							<article className="workflow-card lender-request-card" key={request.bookingId}>
-								<div className="request-main-info">
-									<div className="request-header-row">
+							<article className="workflow-card" key={request.bookingId}>
+								{/* Card Top Header */}
+								<div className="card-header-row">
+									<div className="card-header-left">
 										<span className="workflow-label">Booking #{request.bookingId}</span>
-										<strong className={`status status-${request.status.toLowerCase()}`}>
-											{request.status}
-										</strong>
+										{request.createdAt && (
+											<span className="booking-timestamp">
+												Requested on {new Date(request.createdAt).toLocaleDateString()}
+											</span>
+										)}
+									</div>
+									<strong className={`status status-${request.status.toLowerCase()}`}>
+										{request.status}
+									</strong>
+								</div>
+
+								{/* Card Body */}
+								<div className="card-main-content">
+									<div className="item-title-row">
+										<h2 className="item-title">
+											{request.item?.itemName || `Item #${request.itemId}`}
+										</h2>
 									</div>
 
-									<h2>{request.item?.itemName || `Item #${request.itemId}`}</h2>
-									<p className="item-meta-info">
-										<span>{request.item?.location || "Location not specified"}</span>
-										<span>₹{request.price || request.item?.rentalPrice || "-"} / hr</span>
-									</p>
+									<div className="item-meta-bar">
+										<span className="meta-item">
+											<IconMapPin size={14} />
+											{request.item?.location || "Location not specified"}
+										</span>
+										<span className="meta-item meta-price">
+											₹{request.price || request.item?.rentalPrice || "-"} / hr
+										</span>
+										{request.item?.securityDeposit != null && (
+											<span className="meta-item">
+												Deposit: ₹{request.item.securityDeposit}
+											</span>
+										)}
+									</div>
 
-									<div className="borrower-rating-card">
-										<div className="borrower-card-header">
-											<div>
-												<span className="borrower-title">Borrower</span>
-												<h3 className="borrower-name">
-													{request.borrower?.name || "Verified User"}
-												</h3>
-												{request.borrower?.location && (
-													<span className="borrower-location">{request.borrower.location}</span>
-												)}
+									{/* Borrower Profile Section */}
+									<div className="borrower-section">
+										<div className="borrower-header">
+											<div className="borrower-identity">
+												<div className="borrower-avatar">{borrowerInitial}</div>
+												<div className="borrower-meta">
+													<div className="name-row">
+														<h3 className="borrower-name">
+															{request.borrower?.name || "Verified Community Member"}
+														</h3>
+													</div>
+													{request.borrower?.location && (
+														<span className="borrower-location">
+															<IconMapPin size={12} />
+															{request.borrower.location}
+														</span>
+													)}
+												</div>
 											</div>
-											<div className={`rating-badge ${ratingInfo.badgeClass}`}>
+
+											<div className={`rating-pill ${ratingInfo.badgeClass}`}>
+												<IconStar size={13} filled={ratingInfo.avg !== null} />
 												{ratingInfo.label}
 											</div>
 										</div>
 
-										<div className="rating-recommendation">
-											{ratingInfo.recommendation}
-										</div>
-
-										{/* Customer Rental History Stats */}
-										<div className="customer-rental-history-badge">
+										{/* Customer Rental History Badges */}
+										<div className="trust-badges-row">
 											{request.customerHistory?.timesWithLender > 0 ? (
-												<span className="repeat-badge">
-													🔁 Rented from you <strong>{request.customerHistory.timesWithLender}</strong> previous {request.customerHistory.timesWithLender === 1 ? "time" : "times"}
+												<span className="repeat-renter-pill">
+													<IconRepeat size={13} />
+													Repeat Customer: {request.customerHistory.timesWithLender} previous{" "}
+													{request.customerHistory.timesWithLender === 1 ? "rental" : "rentals"} from you
 												</span>
 											) : (
-												<span className="first-time-badge">
-													🌱 First-time renting from you
+												<span className="first-time-pill">
+													<IconUser size={13} />
+													First-time borrowing from you
 												</span>
 											)}
+
 											{request.customerHistory?.totalRentals > 0 && (
-												<span className="total-badge">
-													• {request.customerHistory.totalRentals} platform {request.customerHistory.totalRentals === 1 ? "rental" : "rentals"} overall
+												<span className="platform-history-pill">
+													• {request.customerHistory.totalRentals} platform{" "}
+													{request.customerHistory.totalRentals === 1 ? "rental" : "rentals"} total
 												</span>
 											)}
 										</div>
 
+										<div className="recommendation-note">
+											<span>{ratingInfo.recommendation}</span>
+										</div>
+
+										{/* Reviews Expand / Collapse */}
 										{request.reviews && request.reviews.length > 0 && (
-											<div className="borrower-reviews-wrapper">
+											<div className="reviews-toggle-section">
 												<button
 													type="button"
 													className="toggle-reviews-btn"
 													onClick={() => toggleReviews(request.bookingId)}
 												>
+													{isReviewsOpen ? <IconChevronUp size={13} /> : <IconChevronDown size={13} />}
 													{isReviewsOpen
-														? "Hide Borrower Reviews"
-														: `View ${request.reviews.length} Previous Review${request.reviews.length > 1 ? 's' : ''}`}
+														? "Hide borrower reviews"
+														: `View ${request.reviews.length} previous review${
+																request.reviews.length > 1 ? "s" : ""
+														  }`}
 												</button>
 
 												{isReviewsOpen && (
-													<div className="reviews-dropdown-list">
+													<div className="reviews-list">
 														{request.reviews.map((rev) => (
-															<div className="review-item-card" key={rev.reviewId}>
-																<div className="review-item-top">
-																	<span className="review-stars">{Number(rev.rating).toFixed(1)} / 5</span>
-																	<small className="review-date">
+															<div className="review-card" key={rev.reviewId}>
+																<div className="review-card-top">
+																	<span className="review-card-stars">
+																		<IconStar size={12} filled={true} />
+																		{Number(rev.rating).toFixed(1)} / 5.0
+																	</span>
+																	<small className="review-card-date">
 																		{rev.createdAt ? new Date(rev.createdAt).toLocaleDateString() : ""}
 																	</small>
 																</div>
-																{rev.comment && <p className="review-comment">"{rev.comment}"</p>}
+																{rev.comment && (
+																	<p className="review-card-comment">"{rev.comment}"</p>
+																)}
 															</div>
 														))}
 													</div>
@@ -317,223 +365,241 @@ function RentalRequestsPage() {
 										)}
 									</div>
 
-									<dl className="booking-details">
-										<div><dt>From</dt><dd>{new Date(request.startTime).toLocaleString()}</dd></div>
-										<div><dt>Until</dt><dd>{new Date(request.endTime).toLocaleString()}</dd></div>
-									</dl>
-								</div>
-
-								<div className="workflow-actions-box">
-									{request.status === "REQUESTED" ? (
-										<div className="workflow-actions">
-											<button
-												className="workflow-button approve-btn"
-												onClick={() => reviewRequest(request.bookingId, "APPROVED")}
-											>
-												Approve Request
-											</button>
-											<button
-												className="workflow-button danger reject-btn"
-												onClick={() => reviewRequest(request.bookingId, "REJECTED")}
-											>
-												Reject Request
-											</button>
+									{/* Schedule & Duration Grid */}
+									<div className="schedule-grid">
+										<div className="schedule-block">
+											<span className="schedule-label">
+												<IconCalendar size={12} />
+												Start Time
+											</span>
+											<span className="schedule-value">
+												{new Date(request.startTime).toLocaleString([], {
+													dateStyle: "medium",
+													timeStyle: "short",
+												})}
+											</span>
 										</div>
-									) : (
-										<div className="reviewed-tag">
-											Decision Recorded: <strong>{request.status}</strong>
+										<div className="schedule-block">
+											<span className="schedule-label">
+												<IconClock size={12} />
+												End Time
+											</span>
+											<span className="schedule-value">
+												{new Date(request.endTime).toLocaleString([], {
+													dateStyle: "medium",
+													timeStyle: "short",
+												})}
+											</span>
 										</div>
-									)}
+									</div>
 
-									{/* Return Verification Questionnaire for Lender */}
+									{/* Direct 1-Click Return Resolution Section */}
 									{request.status === "RETURNED" && (
-										<div className="lender-return-verification">
-											<div className="verification-header">
-												<h4>🔄 Return Verification</h4>
-												<span className="badge-pill">Action Required</span>
+										<div className="return-streamlined-panel">
+											<div className="return-panel-header">
+												<h4 className="return-panel-title">
+													<IconPackage size={17} />
+													Return Verification
+												</h4>
+												<span className="return-panel-badge">Action Required</span>
 											</div>
-
-											<div className="question-block">
-												<p className="question-title">1. Did the product return?</p>
-												<div className="question-options">
-													<label className={`choice-pill ${returnAnswers[request.bookingId]?.returned !== false ? 'selected' : ''}`}>
-														<input
-															type="radio"
-															name={`returned-${request.bookingId}`}
-															checked={returnAnswers[request.bookingId]?.returned !== false}
-															onChange={() => setReturnAnswer(request.bookingId, 'returned', true)}
-														/>
-														✅ Yes, product has returned
-													</label>
-													<label className={`choice-pill ${returnAnswers[request.bookingId]?.returned === false ? 'selected' : ''}`}>
-														<input
-															type="radio"
-															name={`returned-${request.bookingId}`}
-															checked={returnAnswers[request.bookingId]?.returned === false}
-															onChange={() => setReturnAnswer(request.bookingId, 'returned', false)}
-														/>
-														❌ Not returned / Issue
-													</label>
-												</div>
-											</div>
-
-											{returnAnswers[request.bookingId]?.returned !== false && (
-												<div className="question-block">
-													<p className="question-title">2. Are you willing to list it out again?</p>
-													<div className="question-options">
-														<label className={`choice-pill ${returnAnswers[request.bookingId]?.relist !== false ? 'selected' : ''}`}>
-															<input
-																type="radio"
-																name={`relist-${request.bookingId}`}
-																checked={returnAnswers[request.bookingId]?.relist !== false}
-																onChange={() => setReturnAnswer(request.bookingId, 'relist', true)}
-															/>
-															📦 Yes, relist as available
-														</label>
-														<label className={`choice-pill ${returnAnswers[request.bookingId]?.relist === false ? 'selected' : ''}`}>
-															<input
-																type="radio"
-																name={`relist-${request.bookingId}`}
-																checked={returnAnswers[request.bookingId]?.relist === false}
-																onChange={() => setReturnAnswer(request.bookingId, 'relist', false)}
-															/>
-															⏸️ No, keep unlisted for now
-														</label>
-													</div>
-												</div>
-											)}
-
-											<div className="verification-actions">
-												{returnAnswers[request.bookingId]?.returned !== false ? (
-													<button
-														className="workflow-button"
-														disabled={confirmingBookingId === request.bookingId}
-														onClick={() => handleConfirmReturn(request.bookingId, returnAnswers[request.bookingId]?.relist !== false)}
-													>
-														{confirmingBookingId === request.bookingId ? "Confirming..." : "Confirm Return & Complete"}
-													</button>
-												) : (
-													<button
-														className="workflow-button danger"
-														onClick={() => setDamageModalBooking(request)}
-													>
-														Report Damage / Missing Item
-													</button>
-												)}
-											</div>
-
-											<div className="workflow-actions" style={{marginTop: '12px', borderTop: '1px dashed #d0e2f5', paddingTop: '10px'}}>
+											<p className="return-panel-desc">
+												The borrower has returned this item. Inspect the product and complete the return in one click:
+											</p>
+											<div className="return-actions-row">
+												<button
+													className="workflow-button success"
+													disabled={confirmingBookingId === request.bookingId}
+													onClick={() => handleConfirmReturn(request.bookingId, true)}
+													title="Confirm return and make item available again"
+												>
+													<IconCheck size={14} />
+													{confirmingBookingId === request.bookingId
+														? "Processing..."
+														: "Confirm Return & Relist Item"}
+												</button>
+												<button
+													className="workflow-button secondary"
+													disabled={confirmingBookingId === request.bookingId}
+													onClick={() => handleConfirmReturn(request.bookingId, false)}
+													title="Confirm return but keep item unlisted for now"
+												>
+													Confirm Return (Keep Unlisted)
+												</button>
 												<button
 													className="workflow-button danger"
 													onClick={() => setDamageModalBooking(request)}
-													style={{fontSize: '12px', padding: '6px 10px'}}
 												>
-													Report Damage
+													<IconAlertTriangle size={14} />
+													Report Issue / Damage
 												</button>
 												<button
-													className="workflow-button"
+													className="workflow-button star-btn"
 													onClick={() => setReviewModalBooking(request)}
-													style={{fontSize: '12px', padding: '6px 10px'}}
 												>
+													<IconStar size={14} />
 													Review Borrower
 												</button>
 											</div>
 										</div>
 									)}
 
+									{/* Completed State Banner */}
 									{request.status === "COMPLETED" && (
-										<div style={{marginTop: '10px'}}>
-											<div className="reviewed-tag" style={{background: '#e8f7ec', color: '#1b5e20', border: '1px solid #b7e4c7', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', marginBottom: '8px'}}>
-												✅ Return Verified & Rental Completed
-											</div>
-											<div className="workflow-actions">
+										<div className="completed-alert-banner">
+											<span className="completed-badge-text">
+												<IconCheck size={16} />
+												Return Verified & Rental Completed
+											</span>
+											<div style={{ display: "flex", gap: "8px" }}>
 												<button
-													className="workflow-button"
+													className="workflow-button star-btn sm"
 													onClick={() => setReviewModalBooking(request)}
-													style={{fontSize: '12px', padding: '6px 10px'}}
 												>
+													<IconStar size={13} />
 													Review Borrower
 												</button>
 												<button
-													className="workflow-button danger"
+													className="workflow-button danger sm"
 													onClick={() => setDamageModalBooking(request)}
-													style={{fontSize: '12px', padding: '6px 10px'}}
 												>
+													<IconAlertTriangle size={13} />
 													Report Damage
 												</button>
 											</div>
 										</div>
 									)}
 								</div>
+
+								{/* Card Bottom Actions (For REQUESTED status) */}
+								{request.status === "REQUESTED" && (
+									<div className="card-actions-bar">
+										<button
+											className="workflow-button success"
+											onClick={() => reviewRequest(request.bookingId, "APPROVED")}
+										>
+											<IconCheck size={14} />
+											Approve Request
+										</button>
+										<button
+											className="workflow-button danger"
+											onClick={() => reviewRequest(request.bookingId, "REJECTED")}
+										>
+											<IconX size={14} />
+											Reject Request
+										</button>
+									</div>
+								)}
 							</article>
 						);
 					})}
 				</div>
 
-				{/* Modals */}
+				{/* Damage Report Modal */}
 				{damageModalBooking && (
-					<div className="modal-overlay">
+					<div
+						className="modal-overlay"
+						onClick={(e) => {
+							if (e.target === e.currentTarget) setDamageModalBooking(null);
+						}}
+					>
 						<div className="modal-card">
-							<h2>Report Damage</h2>
-							<p>For <strong>Item #{damageModalBooking.itemId}</strong> from booking #{damageModalBooking.bookingId}</p>
+							<button
+								className="modal-close-btn"
+								onClick={() => setDamageModalBooking(null)}
+								title="Close dialog"
+							>
+								<IconX size={16} />
+							</button>
+							<h2>Report Item Damage</h2>
+							<p>
+								File an incident report for <strong>Item #{damageModalBooking.itemId}</strong> from booking #{damageModalBooking.bookingId}.
+							</p>
 							<div className="form-group">
 								<label>Damage Description</label>
 								<textarea
 									value={damageDesc}
 									onChange={(e) => setDamageDesc(e.target.value)}
-									placeholder="Describe the damage..."
-									style={{width: '100%', minHeight: '80px'}}
+									placeholder="Describe the condition, missing parts, or physical defects..."
+									rows={3}
 								/>
 							</div>
-							<div className="form-group" style={{marginTop: '10px'}}>
-								<label>Estimated Cost (₹)</label>
+							<div className="form-group">
+								<label>Estimated Repair / Replacement Cost (₹)</label>
 								<input
 									type="number"
 									value={damageCost}
 									onChange={(e) => setDamageCost(e.target.value)}
-									style={{width: '100%', padding: '8px'}}
+									placeholder="e.g. 500"
 								/>
 							</div>
-							<div style={{display: 'flex', gap: '10px', marginTop: '15px'}}>
-								<button className="workflow-button danger" onClick={handleDamageReport}>File Report</button>
-								<button className="workflow-button secondary" onClick={() => setDamageModalBooking(null)}>Cancel</button>
+							<div className="modal-actions">
+								<button className="workflow-button secondary" onClick={() => setDamageModalBooking(null)}>
+									Cancel
+								</button>
+								<button className="workflow-button danger-solid" onClick={handleDamageReport}>
+									Submit Report
+								</button>
 							</div>
 						</div>
 					</div>
 				)}
 
+				{/* Review Modal */}
 				{reviewModalBooking && (
-					<div className="modal-overlay">
+					<div
+						className="modal-overlay"
+						onClick={(e) => {
+							if (e.target === e.currentTarget) setReviewModalBooking(null);
+						}}
+					>
 						<div className="modal-card">
+							<button
+								className="modal-close-btn"
+								onClick={() => setReviewModalBooking(null)}
+								title="Close dialog"
+							>
+								<IconX size={16} />
+							</button>
 							<h2>Review Borrower</h2>
+							<p>Rate and leave feedback for the borrower from booking #{reviewModalBooking.bookingId}.</p>
 							<div className="form-group">
-								<label>Rating (1-5)</label>
-								<input
-									type="number"
-									min="1"
-									max="5"
-									value={reviewRating}
-									onChange={(e) => setReviewRating(e.target.value)}
-									style={{width: '100%', padding: '8px'}}
-								/>
+								<label>Your Rating</label>
+								<div className="star-rating-select">
+									{[1, 2, 3, 4, 5].map((star) => (
+										<button
+											key={star}
+											type="button"
+											className={`star-btn-pick ${star <= reviewRating ? "active" : ""}`}
+											onClick={() => setReviewRating(star)}
+											title={`${star} star${star > 1 ? "s" : ""}`}
+										>
+											<IconStar size={26} filled={star <= reviewRating} />
+										</button>
+									))}
+									<span className="star-score-text">{reviewRating} / 5 Stars</span>
+								</div>
 							</div>
-							<div className="form-group" style={{marginTop: '10px'}}>
-								<label>Comment</label>
+							<div className="form-group">
+								<label>Feedback & Comments</label>
 								<textarea
 									value={reviewComment}
 									onChange={(e) => setReviewComment(e.target.value)}
-									placeholder="Great borrower!"
-									style={{width: '100%', minHeight: '80px'}}
+									placeholder="Respectful borrower, returned item on schedule and in excellent condition!"
+									rows={3}
 								/>
 							</div>
-							<div style={{display: 'flex', gap: '10px', marginTop: '15px'}}>
-								<button className="workflow-button" onClick={handleReview}>Submit Review</button>
-								<button className="workflow-button danger" onClick={() => setReviewModalBooking(null)}>Cancel</button>
+							<div className="modal-actions">
+								<button className="workflow-button secondary" onClick={() => setReviewModalBooking(null)}>
+									Cancel
+								</button>
+								<button className="workflow-button" onClick={handleReview}>
+									Submit Review
+								</button>
 							</div>
 						</div>
 					</div>
 				)}
-
 			</main>
 		</div>
 	);
