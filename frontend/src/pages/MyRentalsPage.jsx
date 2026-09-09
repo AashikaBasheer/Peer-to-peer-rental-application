@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { getMyRentals, createReturn, createReview } from "../services/api";
+import { getBookingsByRenter, createReturn, createReview, getProductById } from "../services/api";
 import { supabase } from "../lib/supabase";
 import "./WorkflowPage.css";
 
@@ -23,8 +23,30 @@ function MyRentalsPage() {
 			return;
 		}
 		try {
-			const fetched = await getMyRentals(renterId);
-			fetched.sort((a, b) => {
+			const fetched = await getBookingsByRenter(renterId);
+			if (!fetched || fetched.length === 0) {
+				setBookings([]);
+				setMessage("No rental requests found.");
+				return;
+			}
+
+			// Enrich bookings with item details so product name, price, and location are visible
+			const enriched = await Promise.all(
+				fetched.map(async (booking) => {
+					let item = null;
+					try {
+						item = await getProductById(booking.itemId);
+					} catch (e) {
+						// item may have been removed or unavailable
+					}
+					return {
+						...booking,
+						item,
+					};
+				})
+			);
+
+			enriched.sort((a, b) => {
 				const dateA = new Date(a.createdAt || 0).getTime();
 				const dateB = new Date(b.createdAt || 0).getTime();
 				if (dateA !== dateB) {
@@ -32,10 +54,54 @@ function MyRentalsPage() {
 				}
 				return (b.bookingId || 0) - (a.bookingId || 0);
 			});
-			setBookings(fetched);
+
+			setBookings(enriched);
 			setMessage("");
 		} catch (error) {
+			console.error("Failed to load rentals:", error);
 			setMessage("Unable to load your rental requests.");
+		}
+	};
+
+	const handleReturn = async () => {
+		if (!returnModalBooking) return;
+		try {
+			await createReturn({
+				bookingId: returnModalBooking.bookingId,
+				remarks: returnRemarks,
+				condition: "Good",
+				status: "COMPLETED",
+			});
+			setReturnModalBooking(null);
+			setReturnRemarks("");
+			alert("Return submitted successfully!");
+			await loadBookings();
+		} catch (error) {
+			console.error("Error returning item:", error);
+			alert("Error submitting return. Please try again.");
+		}
+	};
+
+	const handleReview = async () => {
+		if (!reviewModalBooking) return;
+		try {
+			const { data } = await supabase.auth.getSession();
+			const reviewerId = data.session?.user?.id;
+			await createReview({
+				bookingId: reviewModalBooking.bookingId,
+				reviewerId,
+				revieweeId: reviewModalBooking.lenderId,
+				rating: Number(reviewRating),
+				comment: reviewComment,
+			});
+			setReviewModalBooking(null);
+			setReviewRating(5);
+			setReviewComment("");
+			alert("Review submitted!");
+			await loadBookings();
+		} catch (error) {
+			console.error("Error submitting review:", error);
+			alert("Error submitting review. Please try again.");
 		}
 	};
 

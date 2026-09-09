@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { createProduct, addItemImage } from "../services/api";
+import { createProduct, addItemImage, getUserById } from "../services/api";
 import { supabase } from "../lib/supabase";
 import "./WorkflowPage.css";
 
@@ -22,6 +22,47 @@ function AddProductPage() {
 	const [error, setError] = useState("");
 	const [imageFile, setImageFile] = useState(null);
 	const [imagePreview, setImagePreview] = useState("");
+
+	useEffect(() => {
+		async function loadOwnerLocation() {
+			try {
+				const { data } = await supabase.auth.getSession();
+				const user = data.session?.user;
+				if (!user) return;
+
+				// 1. Check user metadata from Supabase signup
+				let ownerCity = user.user_metadata?.location;
+
+				// 2. Check localStorage saved during registration/login
+				if (!ownerCity) {
+					ownerCity = localStorage.getItem("user_city");
+				}
+
+				// 3. Check database user profile
+				if (!ownerCity && user.id) {
+					try {
+						const profile = await getUserById(user.id);
+						if (profile?.location) {
+							ownerCity = profile.location;
+						}
+					} catch {
+						// profile fetch ignore
+					}
+				}
+
+				if (ownerCity && ownerCity.trim()) {
+					setForm((prev) => ({
+						...prev,
+						location: ownerCity.trim(),
+					}));
+				}
+			} catch (err) {
+				console.error("Failed to default owner location:", err);
+			}
+		}
+
+		loadOwnerLocation();
+	}, []);
 
 	function updateField(event) {
 		setForm({
@@ -212,6 +253,9 @@ function AddProductPage() {
 							onChange={updateField}
 							required
 						>
+							{form.location && !["Chennai", "Madurai", "Pondicherry", "Coimbatore", "Trichy", "Salem"].includes(form.location) && (
+								<option value={form.location}>{form.location}</option>
+							)}
 							<option value="Chennai">Chennai</option>
 							<option value="Madurai">Madurai</option>
 							<option value="Pondicherry">Pondicherry</option>

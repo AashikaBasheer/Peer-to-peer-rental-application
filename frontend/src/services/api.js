@@ -187,10 +187,9 @@ export const createRentalRequest = async (
 };
 
 
-export const getMyRentals = async () => {
-
+export const getMyRentals = async (renterId) => {
   const response = await api.get(
-    "/rentals/my-rentals"
+    `/bookings/renter/${renterId}`
   );
 
   return response.data;
