@@ -18,11 +18,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByItemIdInOrderByCreatedAtDesc(List<Long> itemIds);
 
+    List<Booking> findByLenderIdOrderByCreatedAtDesc(UUID lenderId);
+
     @Query("""
             SELECT COUNT(b)
             FROM Booking b
             WHERE b.itemId = :itemId
-            AND b.status IN ('REQUESTED', 'APPROVED')
+            AND b.status IN ('APPROVED', 'CONFIRMED', 'BOOKED')
             AND b.startTime < :endTime
             AND b.endTime > :startTime
             """)

@@ -2,7 +2,6 @@ package com.rentalplatform.backend.service;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -45,7 +44,8 @@ public class BookingService {
 
         booking.setLenderId(item.getOwnerId());
         
-        if (!Boolean.TRUE.equals(item.getAvailability())) {
+        int maxQuantity = item.getQuantity() != null ? item.getQuantity() : 1;
+        if (!Boolean.TRUE.equals(item.getAvailability()) || maxQuantity <= 0) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT, "Item is currently unavailable");
         }
@@ -56,9 +56,9 @@ public class BookingService {
                 booking.getEndTime()
         );
 
-        if(overlappingBookings > 0) {
+        if (overlappingBookings >= maxQuantity) {
             throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "Item already booked for this period");
+                    HttpStatus.CONFLICT, "Item is already fully booked for this period");
         }
 
         booking.setPrice(item.getRentalPrice());
@@ -80,15 +80,7 @@ public class BookingService {
     }
 
     public List<Booking> getByLender(UUID lenderId) {
-        List<Long> itemIds = itemRepository.findByOwnerId(lenderId).stream()
-                .map(Item::getItemId)
-                .collect(Collectors.toList());
-
-        if (itemIds.isEmpty()) {
-            return List.of();
-        }
-
-        return bookingRepository.findByItemIdInOrderByCreatedAtDesc(itemIds);
+        return bookingRepository.findByLenderIdOrderByCreatedAtDesc(lenderId);
     }
 
     public Booking updateStatus(Long bookingId, String status) {
